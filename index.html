@@ -37,7 +37,7 @@
         .c-blanc { background: var(--blanc); color: black; }
 
         /* Registre i Tandes */
-        .info-tanda { background: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .info-tanda { background: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tanda-card { background: white; padding: 10px; margin-bottom: 10px; border-left: 4px solid var(--primary); border-radius: 5px; }
         .consent-box { margin: 15px 0; background: white; padding: 10px; border-radius: 8px; display: flex; align-items: center; }
         .consent-box input { width: auto; margin-right: 10px; margin-bottom: 0; transform: scale(1.2); }
@@ -86,8 +86,18 @@
     <!-- PÀGINA 2: ANOTACIÓ -->
     <div id="page-marcar" class="page">
         <div class="info-tanda">
-            <span id="txtTandaActual">Entrada 1</span> | Fletxes: <span id="txtFletxesTirades">0</span>/<span id="txtLimit">3</span>
-            <div style="font-size: 2.5rem; color: var(--primary); margin-top: 5px;" id="txtPuntsActuals">0</div>
+            <div style="font-weight: bold; color: #555;">
+                <span id="txtTandaActual">Entrada 1</span> | Fletxes: <span id="txtFletxesTirades">0</span>/<span id="txtLimit">3</span>
+            </div>
+            
+            <!-- Visor de fletxes individuals -->
+            <div style="font-size: 1.6rem; font-weight: bold; margin-top: 10px; min-height: 35px; letter-spacing: 5px; color: #333;" id="txtFletxesActuals">
+                -
+            </div>
+
+            <!-- Suma total de l'entrada -->
+            <div style="font-size: 3rem; font-weight: bold; color: var(--primary); margin-top: 5px; line-height: 1;" id="txtPuntsActuals">0</div>
+            <div style="font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; margin-top: 5px; font-weight: bold;">Suma Entrada</div>
         </div>
 
         <div class="keyboard">
@@ -232,6 +242,13 @@
         document.getElementById('txtFletxesTirades').innerText = fletxesTandaActual.length;
         document.getElementById('txtTandaActual').innerText = "Entrada " + (totesLesTandes.length + 1);
         document.getElementById('txtPuntsActuals').innerText = calcularPuntsArray(fletxesTandaActual);
+        
+        // Mostrar les fletxes individuals a la pantalla
+        let textFletxes = fletxesTandaActual.join(' - ');
+        if (textFletxes === "") {
+            textFletxes = "-"; // Si no hi ha fletxes, mostrem un guió
+        }
+        document.getElementById('txtFletxesActuals').innerText = textFletxes;
     }
 
     // Dibuixar la llista a la pantalla "Registre"
@@ -315,7 +332,7 @@
             consentiment: "Sí"
         };
 
-        // >>> IMPORTANTE: ENGANXA AQUÍ LA TEVA URL DE GOOGLE APPS SCRIPT <<<
+        // URL del teu Google Apps Script, ja corregida amb les cometes
         const urlScript = "https://script.google.com/macros/s/AKfycbwZ7muEk1mjbQlJrb_3duQtwVXztLL1Dgaw85OjkxjNhiJ5pMU99Ou_VTqn0s7Gte2N/exec";
 
         const btnEnvia = document.getElementById('btnEnviarClub');
