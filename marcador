@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcador Arquers Vilanova</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #f4f4f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .app-container { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--primary); margin-top: 0; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 10px; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; display: block; }
+
+        .fletxes-llista { min-height: 40px; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 5px; }
+        .fletxa-tag { background: var(--primary); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; }
+
+        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        button.key { padding: 20px; font-size: 1.2rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; background: #fff; border: 2px solid #ddd; transition: 0.2s; }
+        button.key:active { transform: scale(0.95); background: #eee; }
+        button.key.special { background: #fdfd96; } /* Per la X */
+        button.key.miss { background: #ffb3b3; }    /* Per la M */
+        
+        .controls { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-send { background: #27ae60; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .btn-undo { background: #7f8c8d; color: white; padding: 10px; border: none; border-radius: 8px; cursor: pointer; }
+        
+        .consent-area { font-size: 0.8rem; color: #666; margin-top: 15px; display: flex; align-items: flex-start; gap: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h2>🎯 Lliga Vilanova</h2>
+    
+    <input type="text" id="arquerNom" placeholder="Nom de l'arquer" style="width:94%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc;">
+
+    <div class="stats-grid">
+        <div class="stat-box">Punts: <span id="totalPunts" class="stat-val">0</span></div>
+        <div class="stat-box">X's: <span id="totalXs" class="stat-val">0</span></div>
+    </div>
+
+    <div class="fletxes-llista" id="llistaFletxes">
+        <!-- Aquí apareixeran les puntuacions marcades -->
+    </div>
+
+    <div class="keyboard">
+        <button class="key special" onclick="marcar('X')">X</button>
+        <button class="key" onclick="marcar(10)">10</button>
+        <button class="key" onclick="marcar(9)">9</button>
+        <button class="key" onclick="marcar(8)">8</button>
+        <button class="key" onclick="marcar(7)">7</button>
+        <button class="key" onclick="marcar(6)">6</button>
+        <button class="key" onclick="marcar(5)">5</button>
+        <button class="key" onclick="marcar(4)">4</button>
+        <button class="key" onclick="marcar(3)">3</button>
+        <button class="key" onclick="marcar(2)">2</button>
+        <button class="key" onclick="marcar(1)">1</button>
+        <button class="key miss" onclick="marcar('M')">M</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn-undo" onclick="desfer()">↩ Desfer última fletxa</button>
+        
+        <div class="consent-area">
+            <input type="checkbox" id="consent">
+            <label for="consent">Accepto el tractament de les meves dades per la lliga del club.</label>
+        </div>
+        
+        <button class="btn-send" onclick="enviar()">ENVIAR A SECRETARIA</button>
+    </div>
+</div>
+
+<script>
+    let fletxes = [];
+    let puntsTotals = 0;
+    let xsTotals = 0;
+
+    function marcar(valor) {
+        fletxes.push(valor);
+        actualitzarPantalla();
+    }
+
+    function desfer() {
+        fletxes.pop();
+        actualitzarPantalla();
+    }
+
+    function actualitzarPantalla() {
+        const llista = document.getElementById('llistaFletxes');
+        llista.innerHTML = "";
+        puntsTotals = 0;
+        xsTotals = 0;
+
+        fletxes.forEach((f, index) => {
+            let p = 0;
+            if (f === 'X') { p = 10; xsTotals++; }
+            else if (f === 'M') { p = 0; }
+            else { p = parseInt(f); }
+            
+            puntsTotals += p;
+
+            let span = document.createElement('span');
+            span.className = 'fletxa-tag';
+            span.innerText = f;
+            llista.appendChild(span);
+        });
+
+        document.getElementById('totalPunts').innerText = puntsTotals;
+        document.getElementById('totalXs').innerText = xsTotals;
+    }
+
+    function enviar() {
+        const nom = document.getElementById('arquerNom').value;
+        const consent = document.getElementById('consent').checked;
+
+        if (!nom) { alert("Posa el teu nom!"); return; }
+        if (fletxes.length === 0) { alert("No has marcat cap fletxa!"); return; }
+        if (!consent) { alert("Has d'acceptar el consentiment!"); return; }
+
+        const dades = {
+            arquer: nom,
+            punts: puntsTotals,
+            deus: xsTotals, // En aquest cas comptem X com a valor especial
+            fletxes: fletxes.join(','),
+            consentiment: true
+        };
+
+        // AQUÍ HAS DE POSAR LA URL QUE ET DONI GOOGLE APPS SCRIPT
+        const urlDesti = "LA_TEVA_URL_AQUÍ";
+
+        fetch(urlDesti, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(dades)
+        }).then(() => {
+            alert("Enviat! Molt bona tirada!");
+            fletxes = [];
+            actualitzarPantalla();
+        }).catch(err => alert("Error enviant: " + err));
+    }
+</script>
+
+</body>
+</html>
