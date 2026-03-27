@@ -11,23 +11,25 @@
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); }
         
-        /* Navegació Inferior (Estil App Mòbil) */
+        /* Navegació Inferior */
         .navbar { background: var(--primary); color: white; padding: 10px; display: flex; justify-content: space-around; position: fixed; bottom: 0; width: 100%; z-index: 100; font-size: 0.8rem; }
-        .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; display: flex; flex-direction: column; align-items: center; width: 25%; }
         .nav-btn.active { opacity: 1; font-weight: bold; color: var(--groc); }
         .nav-icon { font-size: 1.5rem; margin-bottom: 2px; }
 
-        .container { padding: 15px; padding-bottom: 80px; max-width: 500px; margin: auto; }
+        .container { padding: 15px; padding-bottom: 90px; max-width: 500px; margin: auto; }
         .page { display: none; }
         .page.active { display: block; }
 
         /* Formularis i Botons */
         input, select, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
-        .btn-action { background: #0fb9b1; color: white; font-weight: bold; border: none; cursor: pointer; }
+        .btn-action { background: #0fb9b1; color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); }
         
         /* Botonera Colors */
         .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .key { height: 75px; border-radius: 12px; border: 2px solid #ccc; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .key { height: 75px; border-radius: 12px; border: 2px solid #ccc; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; user-select: none; }
+        .key:active { opacity: 0.7; transform: scale(0.95); }
         .c-groc { background: var(--groc); color: black; }
         .c-vermell { background: var(--vermell); color: white; }
         .c-blau { background: var(--blau); color: white; }
@@ -37,14 +39,18 @@
         /* Registre i Tandes */
         .info-tanda { background: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tanda-card { background: white; padding: 10px; margin-bottom: 10px; border-left: 4px solid var(--primary); border-radius: 5px; }
+        .consent-box { margin: 15px 0; background: white; padding: 10px; border-radius: 8px; display: flex; align-items: center; }
+        .consent-box input { width: auto; margin-right: 10px; margin-bottom: 0; transform: scale(1.2); }
     </style>
 </head>
 <body>
 
 <div class="container">
 
+    <!-- PÀGINA 1: CONFIGURACIÓ -->
     <div id="page-config" class="page active">
         <h2 style="color: var(--primary);">⚙️ Configuració Tirada</h2>
+        
         <label>Esdeveniment:</label>
         <select id="cfgEvent">
             <option value="Lliga Social ViG 2026">Lliga Social ViG 2026</option>
@@ -77,10 +83,11 @@
         <button class="btn-action" onclick="guardarConfig()">COMENÇAR A PUNTUAR</button>
     </div>
 
+    <!-- PÀGINA 2: ANOTACIÓ -->
     <div id="page-marcar" class="page">
         <div class="info-tanda">
             <span id="txtTandaActual">Entrada 1</span> | Fletxes: <span id="txtFletxesTirades">0</span>/<span id="txtLimit">3</span>
-            <div style="font-size: 2rem; color: var(--primary);" id="txtPuntsActuals">0 punts</div>
+            <div style="font-size: 2.5rem; color: var(--primary); margin-top: 5px;" id="txtPuntsActuals">0</div>
         </div>
 
         <div class="keyboard">
@@ -97,25 +104,34 @@
             <div class="key c-blanc" onclick="addFletxa(1)">1</div>
             <div class="key c-blanc" onclick="addFletxa('M')">M</div>
         </div>
-        <button style="margin-top: 15px; background: #e74c3c; color: white;" onclick="desferUltima()">↶ Desfer última</button>
+        <button style="margin-top: 15px; background: #e74c3c; color: white; padding: 15px; border-radius: 8px; border: none; width: 100%; font-size: 1rem; font-weight: bold; cursor: pointer;" onclick="desferUltima()">↶ Desfer última fletxa</button>
     </div>
 
+    <!-- PÀGINA 3: REGISTRE I ENVIAMENT -->
     <div id="page-registre" class="page">
-        <h2 style="text-align: center;">Resum Tirada</h2>
+        <h2 style="text-align: center;">📋 Resum Tirada</h2>
         <div id="llistaTandes"></div>
-        <button class="btn-action" style="background: #27ae60;" onclick="enviarAlClub()">📤 ENVIAR AL CLUB</button>
+        
+        <div class="consent-box">
+            <input type="checkbox" id="chkConsent">
+            <label for="chkConsent" style="font-size: 0.9rem;">Accepto enviar les dades al club (Llei de Protecció de Dades).</label>
+        </div>
+
+        <button id="btnEnviarClub" class="btn-action" style="background: #27ae60; padding: 15px; font-size: 1.1rem;" onclick="enviarAlClub()">📤 ENVIAR AL CLUB</button>
     </div>
 
+    <!-- PÀGINA 4: ESTADÍSTIQUES -->
     <div id="page-stats" class="page">
-        <h2>📊 Classificació Global</h2>
-        <p>Aquesta secció es connectarà al Google Looker Studio del club per veure el rànquing actualitzat.</p>
-        <div style="background: #ddd; height: 300px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">
-            Espai reservat per la gràfica
+        <h2 style="text-align: center;">📊 Classificació</h2>
+        <p style="text-align: center; color: #666; font-size: 0.9rem;">Rànquing global de la Lliga Social ViG.</p>
+        <div style="background: #e0e0e0; height: 350px; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 2px dashed #999;">
+            <i>(Espai per incrustar Google Looker Studio)</i>
         </div>
     </div>
 
 </div>
 
+<!-- NAVEGACIÓ INFERIOR -->
 <div class="navbar">
     <div class="nav-btn active" id="btn-config" onclick="showPage('config')"><span class="nav-icon">⚙️</span>Config</div>
     <div class="nav-btn" id="btn-marcar" onclick="showPage('marcar')"><span class="nav-icon">🎯</span>Puntuar</div>
@@ -128,16 +144,17 @@
     let fletxesTandaActual = [];
     let totesLesTandes = [];
 
-    // Carregar dades guardades al mòbil en obrir l'app
+    // Carregar memòria en obrir l'app
     window.onload = function() {
         if(localStorage.getItem('vig_config')) {
             let guardat = JSON.parse(localStorage.getItem('vig_config'));
-            document.getElementById('cfgNom').value = guardat.nom;
-            document.getElementById('cfgArc').value = guardat.arc;
-            document.getElementById('cfgDistancia').value = guardat.dist;
+            document.getElementById('cfgNom').value = guardat.nom || '';
+            document.getElementById('cfgArc').value = guardat.arc || 'Instintiu';
+            document.getElementById('cfgDistancia').value = guardat.dist || '18';
         }
     }
 
+    // Navegació entre pestanyes
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -146,30 +163,29 @@
         if(pageId === 'registre') renderRegistre();
     }
 
+    // Guardar configuració i anar a puntuar
     function guardarConfig() {
         config = {
             event: document.getElementById('cfgEvent').value,
-            nom: document.getElementById('cfgNom').value,
+            nom: document.getElementById('cfgNom').value.trim(),
             arc: document.getElementById('cfgArc').value,
             dist: document.getElementById('cfgDistancia').value,
             limit: document.getElementById('cfgFletxesMax').value
         };
 
-        if(!config.nom) { alert("Has de posar el teu nom!"); return; }
+        if(!config.nom) { alert("Siusplau, escriu el teu nom i cognom."); return; }
 
-        // Guardar nom i arc per la pròxima vegada que obri l'app
         localStorage.setItem('vig_config', JSON.stringify(config));
-        
         document.getElementById('txtLimit').innerText = config.limit === 'lliure' ? '∞' : config.limit;
+        
         actualitzarMarcador();
         showPage('marcar');
     }
 
+    // Afegir una fletxa a l'entrada actual
     function addFletxa(val) {
-        // Lògica del límit de fletxes
         if(config.limit !== 'lliure' && fletxesTandaActual.length >= parseInt(config.limit)) {
             alert("Ja has tirat totes les fletxes d'aquesta entrada. Revisa i registra.");
-            // Aquí es guarda automàticament la tanda i es passa a la següent
             totesLesTandes.push([...fletxesTandaActual]);
             fletxesTandaActual = [];
         }
@@ -177,7 +193,6 @@
         fletxesTandaActual.push(val);
         actualitzarMarcador();
 
-        // Si arriba al límit amb aquesta fletxa, avisa
         if(config.limit !== 'lliure' && fletxesTandaActual.length == parseInt(config.limit)) {
             setTimeout(() => {
                 let ok = confirm("Entrada completada. Vols tancar l'entrada i passar a la següent?");
@@ -186,10 +201,11 @@
                     fletxesTandaActual = [];
                     actualitzarMarcador();
                 }
-            }, 200);
+            }, 150);
         }
     }
 
+    // Desfer l'última fletxa marcada
     function desferUltima() {
         if(fletxesTandaActual.length > 0) {
             fletxesTandaActual.pop();
@@ -203,6 +219,7 @@
         }
     }
 
+    // Calcular suma d'un array de fletxes
     function calcularPuntsArray(arr) {
         return arr.reduce((sum, f) => {
             let val = f === 'X' ? 10 : (f === 'M' ? 0 : parseInt(f));
@@ -210,42 +227,123 @@
         }, 0);
     }
 
+    // Actualitzar textos de la pantalla "Puntuar"
     function actualitzarMarcador() {
         document.getElementById('txtFletxesTirades').innerText = fletxesTandaActual.length;
         document.getElementById('txtTandaActual').innerText = "Entrada " + (totesLesTandes.length + 1);
-        document.getElementById('txtPuntsActuals').innerText = calcularPuntsArray(fletxesTandaActual) + " punts";
+        document.getElementById('txtPuntsActuals').innerText = calcularPuntsArray(fletxesTandaActual);
     }
 
+    // Dibuixar la llista a la pantalla "Registre"
     function renderRegistre() {
         let html = "";
         let granTotal = 0;
+        let totalXs = 0;
 
         totesLesTandes.forEach((tanda, i) => {
             let subtotal = calcularPuntsArray(tanda);
             granTotal += subtotal;
+            tanda.forEach(f => { if(f === 'X') totalXs++; });
+            
             html += `<div class="tanda-card">
-                <b>Entrada ${i+1}:</b> ${tanda.join(' - ')} 
-                <span style="float:right;"><b>${subtotal} pts</b></span>
+                <b>E${i+1}:</b> ${tanda.join(' - ')} 
+                <span style="float:right; color: var(--primary);"><b>${subtotal} pts</b></span>
             </div>`;
         });
 
-        // Tanda actual no tancada
         if(fletxesTandaActual.length > 0) {
             let subtotal = calcularPuntsArray(fletxesTandaActual);
             granTotal += subtotal;
-            html += `<div class="tanda-card" style="border-left-color: orange;">
+            fletxesTandaActual.forEach(f => { if(f === 'X') totalXs++; });
+            
+            html += `<div class="tanda-card" style="border-left-color: #f39c12; background: #fffdf5;">
                 <i>Entrada Actual:</i> ${fletxesTandaActual.join(' - ')}
                 <span style="float:right;"><b>${subtotal} pts</b></span>
             </div>`;
         }
 
-        html += `<h3 style="text-align:center;">TOTAL FINAL: ${granTotal}</h3>`;
+        html += `<div style="text-align:center; margin-top: 15px; padding: 15px; background: var(--primary); color: white; border-radius: 8px;">
+                    <div style="font-size: 0.9rem;">TOTAL FINAL</div>
+                    <div style="font-size: 2.5rem; font-weight: bold;">${granTotal}</div>
+                    <div style="font-size: 1rem;">Total X: ${totalXs}</div>
+                 </div>`;
+        
         document.getElementById('llistaTandes').innerHTML = html;
     }
 
+    // Enviar les dades a Google Sheets
     function enviarAlClub() {
-        alert("Funció d'enviament pendent d'actualitzar les noves columnes al Google Sheets!");
-        // Aquí afegirem el Fetch cap al teu Google Apps Script
+        const consentimentMarcat = document.getElementById('chkConsent').checked;
+        if (!consentimentMarcat) {
+            alert("⚠️ Has d'acceptar enviar les dades al club marcant la casella de consentiment.");
+            return;
+        }
+
+        if(fletxesTandaActual.length > 0) {
+            totesLesTandes.push([...fletxesTandaActual]);
+            fletxesTandaActual = [];
+        }
+
+        if(totesLesTandes.length === 0) {
+            alert("No hi ha cap fletxa per enviar!");
+            return;
+        }
+
+        let granTotal = 0;
+        let totalXs = 0;
+        let registreFormatat = "";
+
+        totesLesTandes.forEach((tanda, i) => {
+            let subtotal = 0;
+            tanda.forEach(f => {
+                if(f === 'X') { subtotal += 10; totalXs++; }
+                else if(f === 'M') { subtotal += 0; }
+                else { subtotal += parseInt(f); }
+            });
+            granTotal += subtotal;
+            registreFormatat += `T${i+1}[${tanda.join(',')}] `;
+        });
+
+        const dadesEnvio = {
+            esdeveniment: config.event || "Sense especificar",
+            arquer: config.nom || "Anònim",
+            arc: config.arc || "-",
+            distancia: config.dist || "-",
+            punts: granTotal,
+            deus: totalXs,
+            detall_tandes: registreFormatat.trim(),
+            consentiment: "Sí"
+        };
+
+        // >>> IMPORTANTE: ENGANXA AQUÍ LA TEVA URL DE GOOGLE APPS SCRIPT <<<
+        const urlScript = "LA_TEVA_URL_DE_GOOGLE_AQUI";
+
+        const btnEnvia = document.getElementById('btnEnviarClub');
+        btnEnvia.innerText = "⏳ ENVIANT...";
+        btnEnvia.disabled = true;
+
+        fetch(urlScript, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(dadesEnvio)
+        }).then(() => {
+            alert("🏹 Tirada guardada amb èxit a la base de dades del club!");
+            
+            // Reiniciar l'estat
+            totesLesTandes = [];
+            fletxesTandaActual = [];
+            document.getElementById('chkConsent').checked = false;
+            btnEnvia.innerText = "📤 ENVIAR AL CLUB";
+            btnEnvia.disabled = false;
+            
+            actualitzarMarcador();
+            showPage('config');
+            
+        }).catch(e => {
+            alert("Error en l'enviament. Revisa la teva connexió a internet.");
+            btnEnvia.innerText = "📤 ENVIAR AL CLUB";
+            btnEnvia.disabled = false;
+        });
     }
 </script>
 
