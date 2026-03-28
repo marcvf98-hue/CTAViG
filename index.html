@@ -416,4 +416,83 @@
 
         arquers.forEach(arq => {
             // Unim la tanda actual (si ha quedat oberta) amb les ja tancades
-            let tempT
+            let tempTandes = [...arq.tandes];
+            if(arq.tandaActual.length > 0) {
+                tempTandes.push([...arq.tandaActual]);
+            }
+
+            if(tempTandes.length === 0) return; // Si aquest arquer no té fletxes, l'ignorem
+
+            let granTotal = 0;
+            let totalXs = 0;
+            let registreFormatat = "";
+
+            tempTandes.forEach((tanda, i) => {
+                let subtotal = 0;
+                tanda.forEach(f => {
+                    if(f === 'X') { subtotal += 10; totalXs++; }
+                    else if(f === 'M') { subtotal += 0; }
+                    else { subtotal += parseInt(f); }
+                });
+                granTotal += subtotal;
+                registreFormatat += `T${i+1}[${tanda.join(',')}] `;
+            });
+
+            const dadesEnvio = {
+                esdeveniment: config.event || "Sense especificar",
+                arquer: arq.nom || "Anònim",
+                arc: config.arc || "-",
+                distancia: config.dist || "-",
+                punts: granTotal,
+                deus: totalXs,
+                detall_tandes: registreFormatat.trim(),
+                consentiment: "Sí"
+            };
+
+            // Afegim la petició a la llista d'enviaments
+            promeses.push(
+                fetch(urlScript, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(dadesEnvio)
+                })
+            );
+        });
+
+        if(promeses.length === 0) {
+            alert("No hi ha cap fletxa per enviar!");
+            btnEnvia.innerText = "📤 ENVIAR AL CLUB (TOTS)";
+            btnEnvia.disabled = false;
+            return;
+        }
+
+        try {
+            // Esperem que s'enviïn tots els formularis al Google Sheets
+            await Promise.all(promeses);
+            
+            alert("🏹 Tirada guardada amb èxit! S'han enviat les dades de tots els arquers.");
+            
+            // Buidem la memòria per la següent tirada
+            arquers.forEach(a => { a.tandes = []; a.tandaActual = []; });
+            document.getElementById('chkConsent').checked = false;
+            
+            actualitzarMarcador();
+            showPage('config');
+
+        } catch(e) {
+            alert("S'ha produït un error de connexió, però és possible que les dades s'hagin enviat parcialment. Revisa la lliga més tard.");
+        } finally {
+            btnEnvia.innerText = "📤 ENVIAR AL CLUB (TOTS)";
+            btnEnvia.disabled = false;
+        }
+    }
+
+    // Registrar el Service Worker per fer l'App instal·lable (PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+        .then(() => console.log("Service Worker registrat correctament."));
+    }
+</script>
+
+</body>
+</html>
