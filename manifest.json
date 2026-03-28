@@ -7,7 +7,7 @@
   "theme_color": "#1e272e",
   "icons": [
     {
-      "src": "Logo_CTAVig.png",  // <--- NOM CORREGIT AQUÍ
+      "src": "Logo_CTAViG.png",  // <--- NOM CORREGIT AQUÍ
       "sizes": "192x192 512x512",
       "type": "image/png"        // <--- TIPUS TAMBÉ CORREGIT
     }
