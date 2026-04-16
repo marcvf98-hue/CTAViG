@@ -178,8 +178,8 @@
     let arquerActiu = 0;
     let editArqIdx = -1, editTandaIdx = -1;
     
-    // URL DEFINITIVA DE L'APPS SCRIPT
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbys4euyyWLq_SFfbbc1uFkB8m6ilILKttOxpNiIGuk3zfIqiDS0LNprxW2V149izNLo/exec";
+    // AQUÍ ESTÀ LA TEVA NOVA URL:
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx3C_A8WhhK5SmQuco-ozfxT-wLt_GW6e5BupEINIPESAD3PJlBeM9SqeCxC8u4no4q/exec";
 
     window.onload = function() {
         if(localStorage.getItem('vig_config')) {
@@ -350,10 +350,9 @@
         arquers.forEach(arq => {
             let total = 0, deus = 0, ics = 0, detall = "";
             let tTotal = [...arq.tandes]; 
-            // Si hi ha fletxes soltes a l'entrada actual, les afegim al total a enviar
             if(arq.tandaActual.length > 0) tTotal.push([...arq.tandaActual]); 
             
-            if(tTotal.length === 0) return; // Si aquest arquer no té punts, el saltem
+            if(tTotal.length === 0) return; 
 
             tTotal.forEach((t, i) => {
                 let sub = 0;
@@ -382,7 +381,6 @@
             await Promise.all(promeses); 
             alert("🏹 Tirada guardada amb èxit a la base de dades del club!"); 
             
-            // BUIDAR LES DADES DESPRÉS D'ENVIAR
             arquers.forEach(a => { a.tandes = []; a.tandaActual = []; });
             document.getElementById('chkConsent').checked = false;
             
