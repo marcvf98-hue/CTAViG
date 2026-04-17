@@ -546,6 +546,14 @@
 
     async function fetchDades() {
         const errorDiv = document.getElementById('statsError');
+        const prop = localStorage.getItem('vig_propietari');
+        const histLocal = JSON.parse(localStorage.getItem('vig_historic_privat') || '[]');
+
+        // Entrada local al desplegable si hi ha historial guardat al dispositiu
+        const opcioLocal = (histLocal.length > 0 && prop)
+            ? `<option value="__LOCAL__">📱 ${prop} (local)</option>`
+            : '';
+
         try {
             const res = await fetch(URL_SCRIPT);
             if (!res.ok) throw new Error("Error de resposta");
@@ -554,20 +562,30 @@
 
             const noms = [...new Set(dadesGlobals.map(d => camp(d, 'Arquer', 'arquer')))].filter(n => n);
             document.getElementById('selArquerStats').innerHTML =
-                `<option value="">-- Selecciona Arquer --</option>` + noms.map(n => `<option value="${n}">${n}</option>`).join('');
+                `<option value="">-- Selecciona Arquer --</option>` +
+                opcioLocal +
+                noms.map(n => `<option value="${n}">${n}</option>`).join('');
 
             const evs = [...new Set(dadesGlobals.map(d => camp(d, 'Esdeveniment', 'esdeveniment')))].filter(e => e);
             document.getElementById('selEsdevenimentStats').innerHTML =
-                `<option value="TOTS">Tots els esdeveniments</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
+                `<option value="TOTS">Tots els esdeveniments</option>` +
+                evs.map(e => `<option value="${e}">${e}</option>`).join('');
 
-            const prop = localStorage.getItem('vig_propietari');
-            if (prop && noms.includes(prop)) {
-                document.getElementById('selArquerStats').value = prop;
+            if (prop) {
+                if (noms.includes(prop)) document.getElementById('selArquerStats').value = prop;
+                else if (histLocal.length > 0) document.getElementById('selArquerStats').value = '__LOCAL__';
                 carregarEstadistiques();
             }
         } catch (e) {
             console.log("Error carregant dades:", e);
             errorDiv.style.display = 'block';
+            // Sense connexió, mostrar igualment l'opció local si existeix
+            if (opcioLocal) {
+                document.getElementById('selArquerStats').innerHTML =
+                    `<option value="">-- Selecciona Arquer --</option>` +
+                    opcioLocal.replace('value="__LOCAL__"', 'value="__LOCAL__" selected');
+                carregarEstadistiques();
+            }
         }
     }
 
@@ -577,9 +595,20 @@
         const ev = document.getElementById('selEsdevenimentStats').value;
         if (!arq) return;
 
-        let fil = dadesGlobals.filter(d => camp(d, 'Arquer', 'arquer') === arq);
-        if (dist !== 'TOTES') fil = fil.filter(d => camp(d, 'Distancia', 'Distància', 'distancia') == dist);
-        if (ev !== 'TOTS') fil = fil.filter(d => camp(d, 'Esdeveniment', 'esdeveniment') == ev);
+        let fil = [];
+
+        if (arq === '__LOCAL__') {
+            // Llegir de l'historial local del dispositiu
+            // El format local té els mateixos camps que envia l'app al club
+            fil = JSON.parse(localStorage.getItem('vig_historic_privat') || '[]');
+            if (dist !== 'TOTES') fil = fil.filter(d => d.distancia == dist);
+            if (ev !== 'TOTS') fil = fil.filter(d => d.esdeveniment == ev);
+        } else {
+            // Llegir del Google Sheets
+            fil = dadesGlobals.filter(d => camp(d, 'Arquer', 'arquer') === arq);
+            if (dist !== 'TOTES') fil = fil.filter(d => camp(d, 'Distancia', 'Distància', 'distancia') == dist);
+            if (ev !== 'TOTS') fil = fil.filter(d => camp(d, 'Esdeveniment', 'esdeveniment') == ev);
+        }
 
         let fletxes = [];
         fil.forEach(d => {
