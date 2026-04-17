@@ -227,9 +227,15 @@
                 <span style="display:flex; align-items:center; gap:4px;">Sostre (P90) <div style="width:4px; height:12px; background:#111; border:1px solid #ccc;"></div></span>
             </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="info-tanda" style="margin-bottom:0;"><small>MITJANA (Fletxa)</small><div id="valP50" style="font-size:1.5rem; font-weight:bold; color:var(--primary);">-</div></div>
-            <div class="info-tanda" style="margin-bottom:0;"><small>RÈCORD (Fletxa)</small><div id="valMax" style="font-size:1.5rem; font-weight:bold; color:var(--blau);">-</div></div>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+            <div class="info-tanda" style="margin-bottom:0;"><small>MÍNIM</small><div id="valMin" style="font-size:1.4rem; font-weight:bold; color:var(--vermell);">-</div></div>
+            <div class="info-tanda" style="margin-bottom:0;"><small>MITJANA</small><div id="valP50" style="font-size:1.4rem; font-weight:bold; color:var(--primary);">-</div></div>
+            <div class="info-tanda" style="margin-bottom:0;"><small>MÀXIM</small><div id="valMax" style="font-size:1.4rem; font-weight:bold; color:var(--blau);">-</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:10px;">
+            <div class="info-tanda" style="margin-bottom:0;"><small>P10 (SÒL)</small><div id="valP10n" style="font-size:1.4rem; font-weight:bold; color:#e67e22;">-</div></div>
+            <div class="info-tanda" style="margin-bottom:0;"><small>P50 (MEDIANA)</small><div id="valP50n" style="font-size:1.4rem; font-weight:bold; color:#27ae60;">-</div></div>
+            <div class="info-tanda" style="margin-bottom:0;"><small>P90 (SOSTRE)</small><div id="valP90n" style="font-size:1.4rem; font-weight:bold; color:var(--primary);">-</div></div>
         </div>
     </div>
 
@@ -592,6 +598,10 @@
         if (fletxes.length === 0) {
             document.getElementById('valP50').innerText = "-";
             document.getElementById('valMax').innerText = "-";
+            document.getElementById('valMin').innerText = "-";
+            document.getElementById('valP10n').innerText = "-";
+            document.getElementById('valP50n').innerText = "-";
+            document.getElementById('valP90n').innerText = "-";
             ['mP10', 'mP50', 'mP90'].forEach(id => document.getElementById(id).style.left = "0%");
             return;
         }
@@ -607,6 +617,10 @@
         document.getElementById('mP90').style.left = Math.min(Math.max(p90 * 10, 0), 100) + "%";
         document.getElementById('valP50').innerText = mitjana.toFixed(2);
         document.getElementById('valMax').innerText = Math.max(...fletxes);
+        document.getElementById('valMin').innerText = Math.min(...fletxes);
+        document.getElementById('valP10n').innerText = p10.toFixed(2);
+        document.getElementById('valP50n').innerText = p50.toFixed(2);
+        document.getElementById('valP90n').innerText = p90.toFixed(2);
     }
 
     function calcPercentil(arr, p) {
