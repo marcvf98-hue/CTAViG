@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Club Arquers ViG</title>
-    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e272e">
     <link rel="apple-touch-icon" href="Logo_CTAViG.png">
-
     <style>
         :root { --groc: #FFEB3B; --vermell: #f44336; --blau: #2196F3; --negre: #424242; --blanc: #FFFFFF; --primary: #1e272e; --bg: #f5f6fa; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); overscroll-behavior-y: contain; }
-        
-        /* Header i Navegació */
+
         .club-header { background: var(--primary); color: white; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; width: 100%; z-index: 101; box-sizing: border-box; height: 70px; }
         .club-brand { display: flex; align-items: center; width: 100%; justify-content: center; }
         .club-logo { height: 100%; max-height: 50px; margin-right: 15px; object-fit: contain; }
@@ -21,82 +18,94 @@
         .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; display: flex; flex-direction: column; align-items: center; width: 25%; }
         .nav-btn.active { opacity: 1; font-weight: bold; color: var(--groc); }
         .nav-icon { font-size: 1.5rem; margin-bottom: 2px; }
-        
+
         .container { padding: 85px 15px 90px 15px; max-width: 500px; margin: auto; }
         .page { display: none; }
         .page.active { display: block; }
-        
-        /* Inputs, Botons i Pestanyes */
+
         input, select, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
         .btn-action { background: #0fb9b1; color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
         .btn-action:active { transform: scale(0.98); }
         .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
-        
+
         .archer-tabs { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
         .archer-tab { flex: 1; text-align: center; padding: 10px; background: #ddd; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; white-space: nowrap; transition: 0.2s; color: #555; }
         .archer-tab.active { background: var(--primary); color: var(--groc); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        
-        /* Teclat i Targetes */
+
         .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .key { height: 75px; border-radius: 12px; border: 2px solid #ccc; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; user-select: none; }
         .key:active { opacity: 0.7; transform: scale(0.95); }
-        
         .c-groc { background: var(--groc); color: black; }
         .c-vermell { background: var(--vermell); color: white; }
         .c-blau { background: var(--blau); color: white; }
         .c-negre { background: var(--negre); color: white; border-color: #444; }
         .c-blanc { background: var(--blanc); color: black; }
-        
+
         .info-tanda { background: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tanda-card { background: white; padding: 10px; margin-bottom: 10px; border-left: 4px solid var(--primary); border-radius: 5px; }
         .consent-box { margin: 15px 0; background: white; padding: 10px; border-radius: 8px; display: flex; align-items: center; }
         .consent-box input { width: auto; margin-right: 10px; margin-bottom: 0; transform: scale(1.2); }
-        
-        /* Modal Edició */
-        #modalEdicio { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
-        .modal-content { background:white; padding:20px; border-radius:12px; width:90%; max-width:350px; text-align:center; }
 
-        /* Gràfic de Dispersió */
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; }
+
         .dispersion-bar { position: relative; height: 30px; border-radius: 6px; border: 2px solid #7f8c8d; overflow: hidden; background: linear-gradient(to right, #FFF 0%, #FFF 20%, #424242 20%, #424242 40%, #2196F3 40%, #2196F3 60%, #f44336 60%, #f44336 80%, #FFEB3B 80%, #FFEB3B 100%); margin: 10px 0; }
         .marker { position: absolute; top: -2px; height: 34px; width: 4px; transform: translateX(-50%); transition: 0.5s ease-in-out; }
         .p50-marker { background: white; border: 1.5px solid black; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-        .p10-90-marker { background: #111; border: 1.5px solid white; z-index: 3; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        .p10-90-marker { background: #111; border: 1.5px solid white; z-index: 3; }
+
+        .stats-error { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; color: #856404; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="club-header">
-        <div class="club-brand">
-            <img src="Logo_CTAViG.png" class="club-logo" alt="Logo">
-            <div style="display: flex; flex-direction: column;">
-                <span style="font-weight: bold; font-size: 1.1rem; letter-spacing: 0.5px;">Club Arquers ViG</span>
-                <span id="txtPropietari" style="font-size: 0.75rem; color: #ddd; opacity: 0.9;"></span>
-            </div>
+<div class="club-header">
+    <div class="club-brand">
+        <img src="Logo_CTAViG.png" class="club-logo" alt="Logo">
+        <div style="display:flex; flex-direction:column;">
+            <span style="font-weight:bold; font-size:1.1rem;">Club Arquers ViG</span>
+            <span id="txtPropietari" style="font-size:0.75rem; color:#ddd;"></span>
         </div>
     </div>
+</div>
 
-    <div id="modalEdicio">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ Editar Entrada <span id="modTandaNum"></span></h3>
-            <div id="modArquerNom" style="font-weight:bold; color:#555; margin-bottom:15px;"></div>
-            <div id="modFletxes" style="display:flex; justify-content:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;"></div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-action" style="background:#e74c3c; margin-bottom:0;" onclick="tancarEdicio()">Cancel·lar</button>
-                <button class="btn-action" style="background:#27ae60; margin-bottom:0;" onclick="guardarEdicio()">Guardar</button>
-            </div>
+<!-- Modal: Confirmar tancament d'entrada -->
+<!-- FIX: Substitueix confirm() dins setTimeout, que els navegadors mòbils bloquegen -->
+<div id="modalTancarEntrada" class="overlay">
+    <div class="modal-content">
+        <div style="font-size:2rem; margin-bottom:10px;">🏹</div>
+        <h3 style="margin:0 0 10px; color:var(--primary);">Entrada completada!</h3>
+        <p id="modalTancarResum" style="color:#555; margin-bottom:20px; font-size:0.95rem; line-height:1.6;"></p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-action" style="background:#e74c3c; margin-bottom:0;" onclick="cancellarTancament()">Cancel·lar</button>
+            <button class="btn-action" style="background:#27ae60; margin-bottom:0;" onclick="confirmarTancament()">✓ Confirmar</button>
         </div>
     </div>
+</div>
+
+<!-- Modal: Editar fletxes -->
+<div id="modalEdicio" class="overlay">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:var(--primary);">✏️ Editar Entrada <span id="modTandaNum"></span></h3>
+        <div id="modArquerNom" style="font-weight:bold; color:#555; margin-bottom:15px;"></div>
+        <div id="modFletxes" style="display:flex; justify-content:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;"></div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-action" style="background:#e74c3c; margin-bottom:0;" onclick="tancarEdicio()">Cancel·lar</button>
+            <button class="btn-action" style="background:#27ae60; margin-bottom:0;" onclick="guardarEdicio()">Guardar</button>
+        </div>
+    </div>
+</div>
 
 <div class="container">
 
+    <!-- PÀGINA: CONFIG -->
     <div id="page-config" class="page active">
-        <h2 style="color: var(--primary);">⚙️ Configuració Tirada</h2>
-        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--blau);">
-            <label style="font-weight: bold; font-size: 0.9rem;">El teu Nom (Propietari del mòbil):</label>
-            <input type="text" id="cfgNomPropietari" placeholder="Nom complet..." style="margin-top: 5px; margin-bottom: 0;">
+        <h2 style="color:var(--primary);">⚙️ Configuració Tirada</h2>
+        <div style="background:white; padding:15px; border-radius:8px; margin-bottom:15px; border-left:4px solid var(--blau);">
+            <label style="font-weight:bold; font-size:0.9rem;">El teu Nom (Propietari del mòbil):</label>
+            <input type="text" id="cfgNomPropietari" placeholder="Nom complet..." style="margin-top:5px; margin-bottom:0;">
         </div>
-
-        <label>Esdeveniment i Condicions:</label>
+        <label>Esdeveniment:</label>
         <select id="cfgEvent">
             <option value="Lliga Social ViG 2026">Lliga Social ViG 2026</option>
             <option value="Entrenament">Entrenament</option>
@@ -115,26 +124,38 @@
             <option value="6">6 Fletxes per entrada</option>
             <option value="lliure">Lliure (Sense límit)</option>
         </select>
-        
-        <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
-        <h3 style="color: var(--primary);">👥 Afegir Arquers a la diana</h3>
+        <hr style="border:0; border-top:1px solid #ccc; margin:20px 0;">
+        <h3 style="color:var(--primary);">👥 Arquers a la diana (màx. 3 companys)</h3>
         <input type="text" id="cfgNom1" placeholder="Company 1 (Opcional)">
         <input type="text" id="cfgNom2" placeholder="Company 2 (Opcional)">
         <input type="text" id="cfgNom3" placeholder="Company 3 (Opcional)">
-        
         <button class="btn-action" id="btnGuardarConfig" onclick="guardarConfig()">COMENÇAR A PUNTUAR</button>
-        <button class="btn-action" style="background: #e74c3c; margin-top: 10px;" onclick="reiniciarDiana()">🗑️ REINICIAR DIANA</button>
+        <hr style="border:0; border-top:1px solid #ccc; margin:20px 0;">
+        <h3 style="color:var(--primary);">📱 Caixa Negra (Local)</h3>
+        <button class="btn-action" style="background:#74b9ff; margin-bottom:8px;" onclick="exportarHistoricLocal()">⬇ Descarregar CSV</button>
+        <button class="btn-action" style="background:#e74c3c;" onclick="esborrarHistoricLocal()">🗑️ Buidar Historial Local</button>
     </div>
 
+    <!-- PÀGINA: MARCAR -->
     <div id="page-marcar" class="page">
         <div class="archer-tabs" id="tabsArquers"></div>
         <div class="info-tanda">
-            <div style="font-weight: bold; color: #555;">
-                <span id="txtTandaActual">Entrada 1</span> | Fletxes: <span id="txtFletxesTirades">0</span>/<span id="txtLimit">3</span>
+            <div style="font-weight:bold; color:#555;">
+                <span id="txtTandaActual">Entrada 1</span>
+                &nbsp;|&nbsp;
+                <span id="txtFletxesTirades">0</span>/<span id="txtLimit">3</span> fletxes
             </div>
-            <div id="txtFletxesActuals" style="font-size: 1.6rem; font-weight: bold; margin-top: 10px; min-height: 35px; letter-spacing: 5px; color: #333;">-</div>
-            <div id="txtPuntsActuals" style="font-size: 3rem; font-weight: bold; color: var(--primary); margin-top: 5px; line-height: 1;">0</div>
-            <div style="font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; font-weight: bold;">Suma Entrada</div>
+            <div id="txtFletxesActuals" style="font-size:1.6rem; font-weight:bold; margin-top:10px; min-height:35px; letter-spacing:5px; color:#333;">-</div>
+            <div style="display:flex; justify-content:space-around; margin-top:10px;">
+                <div>
+                    <div style="font-size:2.8rem; font-weight:bold; color:var(--primary); line-height:1;" id="txtPuntsActuals">0</div>
+                    <div style="font-size:0.75rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">Entrada</div>
+                </div>
+                <div>
+                    <div style="font-size:2.8rem; font-weight:bold; color:#27ae60; line-height:1;" id="txtPuntsTotal">0</div>
+                    <div style="font-size:0.75rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">Total</div>
+                </div>
+            </div>
         </div>
         <div class="keyboard">
             <div class="key c-groc" onclick="addFletxa('X')">X</div>
@@ -150,28 +171,33 @@
             <div class="key c-blanc" onclick="addFletxa(1)">1</div>
             <div class="key c-blanc" onclick="addFletxa('M')">M</div>
         </div>
-        <button style="margin-top: 15px; background: #e74c3c; color: white; padding: 15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="desferUltima()">↶ Desfer última fletxa</button>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button style="flex:1; background:#e74c3c; color:white; padding:15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="desferUltima()">↶ Desfer última</button>
+            <!-- Botó manual visible en mode lliure o com a alternativa -->
+            <button id="btnTancarEntrada" style="flex:1; background:var(--primary); color:var(--groc); padding:15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; display:none;" onclick="demanarTancament()">✓ Tancar entrada</button>
+        </div>
     </div>
 
+    <!-- PÀGINA: REGISTRE -->
     <div id="page-registre" class="page">
-        <h2 style="text-align: center; color: var(--primary);">📋 Resum de la Diana</h2>
+        <h2 style="text-align:center; color:var(--primary);">📋 Resum de la Diana</h2>
         <div id="llistaTandes"></div>
         <div class="consent-box">
             <input type="checkbox" id="chkConsent">
-            <label for="chkConsent" style="font-size: 0.9rem;">Accepto enviar les dades a la base de dades.</label>
+            <label for="chkConsent" style="font-size:0.9rem;">Accepto enviar les dades a la base de dades del club.</label>
         </div>
-        <button id="btnEnviarClub" class="btn-action" style="background: #27ae60; padding: 15px;" onclick="enviarAlClub()">📤 ENVIAR RESULTATS</button>
+        <button id="btnEnviarClub" class="btn-action" style="background:#27ae60; padding:15px;" onclick="enviarAlClub()">📤 ENVIAR RESULTATS</button>
     </div>
 
+    <!-- PÀGINA: STATS -->
     <div id="page-stats" class="page">
-        <h2 style="text-align: center; color: var(--primary);">📊 El teu Rendiment</h2>
-        
-        <div class="info-tanda" style="text-align: left;">
-            <label style="font-size: 0.8rem; font-weight: bold; color: #555;">Tria l'arquer:</label>
-            <select id="selArquerStats" onchange="carregarEstadistiques()" style="margin-bottom: 10px;"></select>
-            
-            <label style="font-size: 0.8rem; font-weight: bold; color: #555;">Filtra per Distància:</label>
-            <select id="selDistanciaStats" onchange="carregarEstadistiques()" style="margin-bottom: 0;">
+        <h2 style="text-align:center; color:var(--primary);">📊 El teu Rendiment</h2>
+        <div id="statsError" class="stats-error">⚠️ No s'han pogut carregar les dades del servidor. Comprova la connexió.</div>
+        <div class="info-tanda" style="text-align:left;">
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Tria l'arquer:</label>
+            <select id="selArquerStats" onchange="carregarEstadistiques()" style="margin-bottom:10px;"></select>
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Filtra per Distància:</label>
+            <select id="selDistanciaStats" onchange="carregarEstadistiques()" style="margin-bottom:10px;">
                 <option value="TOTES">Totes les distàncies</option>
                 <option value="18">18 metres (Sala)</option>
                 <option value="30">30 metres</option>
@@ -179,36 +205,29 @@
                 <option value="60">60 metres</option>
                 <option value="70">70 metres</option>
             </select>
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Filtra per Esdeveniment:</label>
+            <select id="selEsdevenimentStats" onchange="carregarEstadistiques()" style="margin-bottom:0;">
+                <option value="TOTS">Tots els esdeveniments</option>
+            </select>
         </div>
-
-        <div class="info-tanda" style="padding: 20px;">
-            <h3 style="margin-top: 0; font-size: 1rem; color: #333;">🎯 Dispersió de Fletxes</h3>
-            <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: -5px; margin-bottom: 15px;">La teva mitjana exacta per fletxa</p>
-            
+        <div class="info-tanda" style="padding:20px;">
+            <h3 style="margin-top:0; font-size:1rem; color:#333;">🎯 Dispersió de Fletxes</h3>
+            <p style="font-size:0.8rem; color:#7f8c8d; margin-top:-5px; margin-bottom:15px;">La teva distribució per fletxa individual</p>
             <div class="dispersion-bar">
-                <div id="mP10" class="marker p10-90-marker" style="left: 0%;"></div>
-                <div id="mP50" class="marker p50-marker" style="left: 0%;"></div>
-                <div id="mP90" class="marker p10-90-marker" style="left: 0%;"></div>
+                <div id="mP10" class="marker p10-90-marker" style="left:0%;"></div>
+                <div id="mP50" class="marker p50-marker" style="left:0%;"></div>
+                <div id="mP90" class="marker p10-90-marker" style="left:0%;"></div>
             </div>
-            
-            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; color: #555; margin-top: 5px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:bold; color:#555; margin-top:5px;">
                 <span style="color:var(--vermell)">0(M)</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
             </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 0.7rem; text-transform: uppercase;">
-                <span style="color: #7f8c8d; display: flex; align-items: center; gap: 5px;">
-                    <div style="width: 4px; height: 12px; background: #111; border: 1px solid #ccc;"></div> Sòl (P10)
-                </span>
-                <span style="color: #2c3e50; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                    <div style="width: 4px; height: 12px; background: white; border: 1px solid black;"></div> Mitjana
-                </span>
-                <span style="color: #7f8c8d; display: flex; align-items: center; gap: 5px;">
-                    Sostre (P90) <div style="width: 4px; height: 12px; background: #111; border: 1px solid #ccc;"></div>
-                </span>
+            <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:0.7rem; text-transform:uppercase; color:#7f8c8d;">
+                <span style="display:flex; align-items:center; gap:4px;"><div style="width:4px; height:12px; background:#111; border:1px solid #ccc;"></div> Sòl (P10)</span>
+                <span style="display:flex; align-items:center; gap:4px; color:#2c3e50; font-weight:bold;"><div style="width:4px; height:12px; background:white; border:1px solid black;"></div> Mediana</span>
+                <span style="display:flex; align-items:center; gap:4px;">Sostre (P90) <div style="width:4px; height:12px; background:#111; border:1px solid #ccc;"></div></span>
             </div>
         </div>
-
-        <div id="detallStatsNumerics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
             <div class="info-tanda" style="margin-bottom:0;"><small>MITJANA (Fletxa)</small><div id="valP50" style="font-size:1.5rem; font-weight:bold; color:var(--primary);">-</div></div>
             <div class="info-tanda" style="margin-bottom:0;"><small>RÈCORD (Fletxa)</small><div id="valMax" style="font-size:1.5rem; font-weight:bold; color:var(--blau);">-</div></div>
         </div>
@@ -229,57 +248,63 @@
     let arquerActiu = 0;
     let editArqIdx = -1, editTandaIdx = -1;
     let dadesGlobals = [];
-    
-    // CONNEXIÓ OFICIAL AMB EL GOOGLE SHEETS
+
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby1EqaZIXTJZwRfKRIoPa_twGtT1dh94KoG2L0noBXqr8ZM-l1o22bh2k5dCcKmbgfq/exec";
+
+    // Normalitza l'accés als camps independentment de majúscules/minúscules
+    function camp(obj, ...claus) {
+        for (let c of claus) {
+            if (obj[c] !== undefined && obj[c] !== null && obj[c] !== '') return obj[c];
+        }
+        return '';
+    }
 
     window.onload = function() {
         const prop = localStorage.getItem('vig_propietari');
-        if(prop) {
+        if (prop) {
             document.getElementById('cfgNomPropietari').value = prop;
             document.getElementById('txtPropietari').innerText = "Dispositiu de " + prop;
         }
-
-        if(localStorage.getItem('vig_config')) {
-            let guardat = JSON.parse(localStorage.getItem('vig_config'));
-            document.getElementById('cfgArc').value = guardat.arc || 'Instintiu';
-            document.getElementById('cfgDistancia').value = guardat.dist || '18';
+        if (localStorage.getItem('vig_config')) {
+            let g = JSON.parse(localStorage.getItem('vig_config'));
+            document.getElementById('cfgArc').value = g.arc || 'Instintiu';
+            document.getElementById('cfgDistancia').value = g.dist || '18';
         }
-        
         fetchDades();
-    }
+    };
 
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('page-' + pageId).classList.add('active');
         document.getElementById('btn-' + pageId).classList.add('active');
-        
-        if(pageId === 'config') {
+        if (pageId === 'config') {
             let hiHaPunts = arquers.some(a => a.tandes.length > 0 || a.tandaActual.length > 0);
             document.getElementById('btnGuardarConfig').innerText = hiHaPunts ? "CONTINUAR TIRADA" : "COMENÇAR A PUNTUAR";
         }
-        if(pageId === 'registre') renderRegistre();
-        if(pageId === 'stats') carregarEstadistiques();
+        if (pageId === 'registre') renderRegistre();
+        if (pageId === 'stats') carregarEstadistiques();
     }
 
     function guardarConfig() {
         const prop = document.getElementById('cfgNomPropietari').value.trim();
-        if(!prop) { alert("Si us plau, introdueix el teu nom com a propietari."); return; }
-        
-        config = { 
-            event: document.getElementById('cfgEvent').value, arc: document.getElementById('cfgArc').value, 
-            dist: document.getElementById('cfgDistancia').value, limit: document.getElementById('cfgFletxesMax').value 
+        if (!prop) { alert("Si us plau, introdueix el teu nom com a propietari."); return; }
+
+        config = {
+            event: document.getElementById('cfgEvent').value,
+            arc: document.getElementById('cfgArc').value,
+            dist: document.getElementById('cfgDistancia').value,
+            limit: document.getElementById('cfgFletxesMax').value
         };
-        
+
         localStorage.setItem('vig_propietari', prop);
         localStorage.setItem('vig_config', JSON.stringify({ arc: config.arc, dist: config.dist }));
         document.getElementById('txtPropietari').innerText = "Dispositiu de " + prop;
 
         let nomsNous = [prop];
-        for(let i=1; i<=3; i++) {
-            let nom = document.getElementById('cfgNom'+i).value.trim();
-            if(nom !== "") nomsNous.push(nom);
+        for (let i = 1; i <= 3; i++) {
+            let nom = document.getElementById('cfgNom' + i).value.trim();
+            if (nom !== "") nomsNous.push(nom);
         }
 
         if (arquers.length > 0) {
@@ -287,33 +312,32 @@
                 if (arquers[i]) arquers[i].nom = nom;
                 else arquers.push({ nom: nom, tandaActual: [], tandes: [] });
             });
-            if (arquers.length > nomsNous.length && confirm("Has eliminat companys. Esborrar la seva puntuació d'aquesta sessió?")) {
-                arquers = arquers.slice(0, nomsNous.length);
+            if (arquers.length > nomsNous.length) {
+                if (confirm("Has eliminat companys. Esborrar la seva puntuació d'aquesta sessió?")) {
+                    arquers = arquers.slice(0, nomsNous.length);
+                }
             }
         } else {
             arquers = nomsNous.map(nom => ({ nom: nom, tandaActual: [], tandes: [] }));
         }
 
+        // Mostrar botó manual "Tancar entrada" si el mode és lliure
+        document.getElementById('btnTancarEntrada').style.display = config.limit === 'lliure' ? 'block' : 'none';
         document.getElementById('txtLimit').innerText = config.limit === 'lliure' ? '∞' : config.limit;
+
         arquerActiu = 0;
-        renderTabsArquers(); actualitzarMarcador(); showPage('marcar');
+        renderTabsArquers();
+        actualitzarMarcador();
+        showPage('marcar');
     }
 
-    function reiniciarDiana() {
-        if (confirm("⚠️ Esborrar tota la diana actual?")) {
-            arquers = []; arquerActiu = 0;
-            document.getElementById('btnGuardarConfig').innerText = "COMENÇAR A PUNTUAR";
-            document.getElementById('cfgNom1').value = "";
-            document.getElementById('cfgNom2').value = "";
-            document.getElementById('cfgNom3').value = "";
-            alert("S'ha buidat la tirada actual!");
-        }
-    }
+    // ── TECLAT I MARCAR ───────────────────────────────────────────────────────
 
-    // LÒGICA DE MARCAR I TECLAT
     function renderTabsArquers() {
         let html = "";
-        arquers.forEach((a, i) => { html += `<div class="archer-tab ${i === arquerActiu ? 'active' : ''}" onclick="canviarArquer(${i})">${a.nom}</div>`; });
+        arquers.forEach((a, i) => {
+            html += `<div class="archer-tab ${i === arquerActiu ? 'active' : ''}" onclick="canviarArquer(${i})">${a.nom}</div>`;
+        });
         document.getElementById('tabsArquers').innerHTML = html;
     }
 
@@ -322,44 +346,81 @@
     function addFletxa(val) {
         let arq = arquers[arquerActiu];
         let limit = config.limit === 'lliure' ? 99 : parseInt(config.limit);
-        if(arq.tandaActual.length >= limit) return;
+        if (arq.tandaActual.length >= limit) return;
+
         arq.tandaActual.push(val);
         actualitzarMarcador();
-        
-        if(arq.tandaActual.length === limit) {
+
+        if (arq.tandaActual.length === limit) {
             let seguent = arquers.findIndex((a, i) => i > arquerActiu && a.tandaActual.length < limit);
-            if(seguent === -1) seguent = arquers.findIndex(a => a.tandaActual.length < limit);
-            if(seguent !== -1) canviarArquer(seguent);
-            else {
-                setTimeout(() => {
-                    if(confirm("Entrada completada per a TOTS els arquers. Tancar-la?")) {
-                        arquers.forEach(a => { a.tandes.push([...a.tandaActual]); a.tandaActual = []; });
-                        arquerActiu = 0; renderTabsArquers(); actualitzarMarcador();
-                    }
-                }, 100);
+            if (seguent === -1) seguent = arquers.findIndex(a => a.tandaActual.length < limit);
+
+            if (seguent !== -1) {
+                canviarArquer(seguent);
+            } else {
+                // Tots han completat l'entrada
+                // FIX: Modal propi en comptes de confirm() dins setTimeout
+                //      Els navegadors mòbils bloquegen confirm() asíncron
+                demanarTancament();
             }
         }
     }
 
+    function demanarTancament() {
+        let lines = arquers.map(a => {
+            let pts = calcularPuntsArray(a.tandaActual);
+            return `<b>${a.nom}</b>: ${a.tandaActual.join(' - ')} = ${pts} pts`;
+        }).join('<br>');
+        document.getElementById('modalTancarResum').innerHTML = lines;
+        document.getElementById('modalTancarEntrada').style.display = 'flex';
+    }
+
+    function confirmarTancament() {
+        arquers.forEach(a => {
+            if (a.tandaActual.length > 0) {
+                a.tandes.push([...a.tandaActual]);
+                a.tandaActual = [];
+            }
+        });
+        arquerActiu = 0;
+        document.getElementById('modalTancarEntrada').style.display = 'none';
+        renderTabsArquers();
+        actualitzarMarcador();
+    }
+
+    function cancellarTancament() {
+        document.getElementById('modalTancarEntrada').style.display = 'none';
+    }
+
     function desferUltima() {
         let arq = arquers[arquerActiu];
-        if(arq.tandaActual.length > 0) { arq.tandaActual.pop(); actualitzarMarcador(); }
-        else if(arq.tandes.length > 0 && confirm("Vols reobrir l'entrada anterior per a TOTS els arquers?")) {
-            arquers.forEach(a => a.tandaActual = a.tandes.pop()); actualitzarMarcador();
+        if (arq.tandaActual.length > 0) {
+            arq.tandaActual.pop();
+            actualitzarMarcador();
+        } else if (arq.tandes.length > 0 && confirm("Vols reobrir l'entrada anterior per a TOTS els arquers?")) {
+            arquers.forEach(a => { if (a.tandes.length > 0) a.tandaActual = a.tandes.pop(); });
+            actualitzarMarcador();
         }
     }
 
-    function calcularPuntsArray(arr) { return arr.reduce((s, f) => s + (f === 'X' ? 10 : (f === 'M' ? 0 : parseInt(f))), 0); }
-
-    function actualitzarMarcador() {
-        let arq = arquers[arquerActiu]; if(!arq) return;
-        document.getElementById('txtFletxesTirades').innerText = arq.tandaActual.length;
-        document.getElementById('txtTandaActual').innerText = "Entrada " + (arq.tandes.length + 1);
-        document.getElementById('txtPuntsActuals').innerText = calcularPuntsArray(arq.tandaActual);
-        document.getElementById('txtFletxesActuals').innerText = arq.tandaActual.join(' - ') || "-";
+    function calcularPuntsArray(arr) {
+        return arr.reduce((s, f) => s + (f === 'X' ? 10 : (f === 'M' ? 0 : parseInt(f))), 0);
     }
 
-    // REGISTRE I EDICIÓ
+    function actualitzarMarcador() {
+        let arq = arquers[arquerActiu];
+        if (!arq) return;
+        document.getElementById('txtFletxesTirades').innerText = arq.tandaActual.length;
+        document.getElementById('txtTandaActual').innerText = arq.nom + " · Entrada " + (arq.tandes.length + 1);
+        document.getElementById('txtPuntsActuals').innerText = calcularPuntsArray(arq.tandaActual);
+        document.getElementById('txtFletxesActuals').innerText = arq.tandaActual.join(' - ') || "-";
+        // Total acumulat de l'arquer actiu
+        let totalAcc = arq.tandes.reduce((s, t) => s + calcularPuntsArray(t), 0) + calcularPuntsArray(arq.tandaActual);
+        document.getElementById('txtPuntsTotal').innerText = totalAcc;
+    }
+
+    // ── REGISTRE I EDICIÓ ─────────────────────────────────────────────────────
+
     function renderRegistre() {
         let html = "";
         arquers.forEach((arq, aIdx) => {
@@ -368,14 +429,15 @@
                      <div style="background:white; border:1px solid #bdc3c7; border-top:none; border-radius:0 0 8px 8px; padding:10px; margin-bottom:15px;">`;
             arq.tandes.forEach((tanda, tIdx) => {
                 let sub = calcularPuntsArray(tanda); total += sub;
-                tanda.forEach(f => { if(f === 'X') { ics++; deus++; } else if(f == 10) deus++; });
+                tanda.forEach(f => { if (f === 'X') { ics++; deus++; } else if (f == 10) deus++; });
                 html += `<div class="tanda-card" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><b>E${tIdx+1}:</b> ${tanda.join(' - ')}</div>
+                    <div><b>E${tIdx + 1}:</b> ${tanda.join(' - ')}</div>
                     <div><b style="color:var(--primary); margin-right:10px;">${sub} pts</b><span style="cursor:pointer;" onclick="obrirEdicio(${aIdx}, ${tIdx})">✏️</span></div>
                 </div>`;
             });
             html += `<div style="text-align:center; padding:10px; background:var(--primary); color:white; border-radius:5px;">
-                <b>TOTAL: ${total}</b> (10s: ${deus} | X's: ${ics})</div></div>`;
+                        <b>TOTAL: ${total}</b> &nbsp;(10s: ${deus} | X's: ${ics})
+                     </div></div>`;
         });
         document.getElementById('llistaTandes').innerHTML = html || "<p style='text-align:center;'>Sense dades per mostrar.</p>";
     }
@@ -388,7 +450,9 @@
         let html = "";
         t.forEach((f, i) => {
             html += `<select id="modF${i}" style="width:auto; font-weight:bold; padding:5px;">`;
-            ['X','10','9','8','7','6','5','4','3','2','1','M'].forEach(o => { html += `<option value="${o}" ${f.toString() === o ? 'selected' : ''}>${o}</option>`; });
+            ['X', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1', 'M'].forEach(o => {
+                html += `<option value="${o}" ${f.toString() === o ? 'selected' : ''}>${o}</option>`;
+            });
             html += `</select>`;
         });
         document.getElementById('modFletxes').innerHTML = html;
@@ -399,129 +463,181 @@
     function guardarEdicio() {
         let t = arquers[editArqIdx].tandes[editTandaIdx];
         arquers[editArqIdx].tandes[editTandaIdx] = t.map((_, i) => {
-            let v = document.getElementById('modF'+i).value;
+            let v = document.getElementById('modF' + i).value;
             return (v === 'X' || v === 'M') ? v : parseInt(v);
         });
         tancarEdicio(); renderRegistre(); actualitzarMarcador();
     }
 
-    async function enviarAlClub() {
-        if (!document.getElementById('chkConsent').checked) { alert("Has d'acceptar enviar les dades al club."); return; }
-        
-        let promeses = [];
-        arquers.forEach(arq => {
-            let total = 0, deus = 0, ics = 0, detall = "";
-            let tTotal = [...arq.tandes]; 
-            if(arq.tandaActual.length > 0) tTotal.push([...arq.tandaActual]); 
-            if(tTotal.length === 0) return; 
+    // ── ENVIAR AL CLUB ────────────────────────────────────────────────────────
 
+    async function enviarAlClub() {
+        if (!document.getElementById('chkConsent').checked) {
+            alert("Has d'acceptar enviar les dades al club.");
+            return;
+        }
+        let totalTandes = arquers.reduce((s, a) => s + a.tandes.length + (a.tandaActual.length > 0 ? 1 : 0), 0);
+        if (totalTandes === 0) { alert("No hi ha cap fletxa apuntada!"); return; }
+
+        let promeses = [];
+        const prop = localStorage.getItem('vig_propietari');
+
+        arquers.forEach(arq => {
+            let total = 0, deus = 0, ics = 0;
+            let tTotal = [...arq.tandes];
+            if (arq.tandaActual.length > 0) tTotal.push([...arq.tandaActual]);
+            if (tTotal.length === 0) return;
+
+            let detall = "";
             tTotal.forEach((t, i) => {
                 let sub = 0;
-                t.forEach(f => { if(f === 'X') { sub += 10; ics++; deus++; } else if(f == 10) { sub += 10; deus++; } else if(f !== 'M') sub += parseInt(f); });
-                total += sub; detall += `T${i+1}[${t.join(',')}] `;
+                t.forEach(f => {
+                    if (f === 'X') { sub += 10; ics++; deus++; }
+                    else if (f == 10) { sub += 10; deus++; }
+                    else if (f !== 'M') sub += parseInt(f);
+                });
+                total += sub;
+                detall += `T${i + 1}[${t.join(',')}] `;
             });
 
-            promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({
-                esdeveniment: config.event, arquer: arq.nom, arc: config.arc, distancia: config.dist,
-                punts: total, deus: deus, ics: ics, detall_tandes: detall.trim(), consentiment: "Sí"
-            })}));
-        });
+            const dades = {
+                esdeveniment: config.event, arquer: arq.nom, arc: config.arc,
+                distancia: config.dist, punts: total, deus: deus, ics: ics,
+                detall_tandes: detall.trim(), consentiment: "Sí"
+            };
 
-        if (promeses.length === 0) { alert("No hi ha cap fletxa apuntada!"); return; }
+            // Guardar historial local si és el propietari
+            if (arq.nom === prop) {
+                let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
+                hist.push({ ...dades, data: new Date().toLocaleString() });
+                localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
+            }
+
+            promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dades) }));
+        });
 
         const btn = document.getElementById('btnEnviarClub');
         btn.innerText = "⏳ ENVIANT..."; btn.disabled = true;
 
-        try { 
-            await Promise.all(promeses); 
-            alert("🏹 Tirada guardada amb èxit!"); 
+        try {
+            await Promise.all(promeses);
+            alert("🏹 Tirada guardada amb èxit!");
             arquers.forEach(a => { a.tandes = []; a.tandaActual = []; });
             document.getElementById('chkConsent').checked = false;
-            actualitzarMarcador(); showPage('config'); 
-            fetchDades(); // Refrescar estadístiques de fons
-        } catch(e) { alert("Error de xarxa en enviar dades."); 
-        } finally { btn.innerText = "📤 ENVIAR RESULTATS"; btn.disabled = false; }
+            actualitzarMarcador();
+            showPage('config');
+            fetchDades();
+        } catch (e) {
+            alert("⚠️ Les dades s'han guardat localment però no s'han pogut enviar al club. Comprova la connexió.");
+        } finally {
+            btn.innerText = "📤 ENVIAR RESULTATS"; btn.disabled = false;
+        }
     }
 
-    // ESTADÍSTIQUES MATEMÀTICAMENT EXACTES
+    // ── ESTADÍSTIQUES ─────────────────────────────────────────────────────────
+
     async function fetchDades() {
+        const errorDiv = document.getElementById('statsError');
         try {
             const res = await fetch(URL_SCRIPT);
+            if (!res.ok) throw new Error("Error de resposta");
             dadesGlobals = await res.json();
-            
-            const noms = [...new Set(dadesGlobals.map(d => d.Arquer))].filter(n => n);
-            let h = `<option value="">-- Selecciona Arquer --</option>`;
-            noms.forEach(n => h += `<option value="${n}">${n}</option>`);
-            document.getElementById('selArquerStats').innerHTML = h;
-            
+            errorDiv.style.display = 'none';
+
+            const noms = [...new Set(dadesGlobals.map(d => camp(d, 'Arquer', 'arquer')))].filter(n => n);
+            document.getElementById('selArquerStats').innerHTML =
+                `<option value="">-- Selecciona Arquer --</option>` + noms.map(n => `<option value="${n}">${n}</option>`).join('');
+
+            const evs = [...new Set(dadesGlobals.map(d => camp(d, 'Esdeveniment', 'esdeveniment')))].filter(e => e);
+            document.getElementById('selEsdevenimentStats').innerHTML =
+                `<option value="TOTS">Tots els esdeveniments</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
+
             const prop = localStorage.getItem('vig_propietari');
-            if(prop && noms.includes(prop)) {
+            if (prop && noms.includes(prop)) {
                 document.getElementById('selArquerStats').value = prop;
                 carregarEstadistiques();
             }
-        } catch(e) { console.log("Carregant dades de fons..."); }
+        } catch (e) {
+            console.log("Error carregant dades:", e);
+            errorDiv.style.display = 'block';
+        }
     }
 
     function carregarEstadistiques() {
         const arq = document.getElementById('selArquerStats').value;
         const dist = document.getElementById('selDistanciaStats').value;
-        
-        if(!arq) return;
+        const ev = document.getElementById('selEsdevenimentStats').value;
+        if (!arq) return;
 
-        let filtrades = dadesGlobals.filter(d => d.Arquer === arq);
-        if(dist !== "TOTES") filtrades = filtrades.filter(d => d['Distància'] == dist || d['Distancia'] == dist);
-        
-        if(filtrades.length === 0) {
+        let fil = dadesGlobals.filter(d => camp(d, 'Arquer', 'arquer') === arq);
+        if (dist !== 'TOTES') fil = fil.filter(d => camp(d, 'Distancia', 'Distància', 'distancia') == dist);
+        if (ev !== 'TOTS') fil = fil.filter(d => camp(d, 'Esdeveniment', 'esdeveniment') == ev);
+
+        let fletxes = [];
+        fil.forEach(d => {
+            let detall = camp(d, 'Detall Tandes', 'detall_tandes');
+            let regex = /\[(.*?)\]/g; let m;
+            while ((m = regex.exec(detall)) !== null) {
+                m[1].split(',').forEach(f => {
+                    let v = f.trim().toUpperCase();
+                    if (v === 'X') fletxes.push(10);
+                    else if (v === 'M') fletxes.push(0);
+                    else if (!isNaN(parseInt(v))) fletxes.push(parseInt(v));
+                });
+            }
+        });
+
+        if (fletxes.length === 0) {
             document.getElementById('valP50').innerText = "-";
             document.getElementById('valMax').innerText = "-";
-            document.getElementById('mP10').style.left = "0%";
-            document.getElementById('mP50').style.left = "0%";
-            document.getElementById('mP90').style.left = "0%";
+            ['mP10', 'mP50', 'mP90'].forEach(id => document.getElementById(id).style.left = "0%");
             return;
         }
 
-        let maxPuntsFletxa = 0;
-        
-        const puntsPerFletxaArr = filtrades.map(d => {
-            let punts = parseInt(d["Punts Totals"]) || 0;
-            let detall = d["Detall Tandes"] || d["detall_tandes"] || "";
-            
-            // Comptem les fletxes exactes sumant les comes i els claudàtors
-            let numFletxes = (detall.match(/,/g) || []).length + (detall.match(/\[/g) || []).length;
-            
-            if (numFletxes === 0) return 0; 
-            
-            let mitjanaTirada = punts / numFletxes;
-            if (mitjanaTirada > maxPuntsFletxa) maxPuntsFletxa = mitjanaTirada;
-            
-            return mitjanaTirada;
-        }).filter(v => v > 0); 
-        
-        puntsPerFletxaArr.sort((a,b) => a-b);
+        fletxes.sort((a, b) => a - b);
+        const p10 = calcPercentil(fletxes, 0.1);
+        const p50 = calcPercentil(fletxes, 0.5);
+        const p90 = calcPercentil(fletxes, 0.9);
+        const mitjana = fletxes.reduce((a, b) => a + b, 0) / fletxes.length;
 
-        const p10 = calcPercentil(puntsPerFletxaArr, 0.1);
-        const p50 = calcPercentil(puntsPerFletxaArr, 0.5);
-        const p90 = calcPercentil(puntsPerFletxaArr, 0.9);
-
-        // Posar marcadors (x10 perquè de 0 a 10 sigui de 0% a 100% de la barra)
         document.getElementById('mP10').style.left = Math.min(Math.max(p10 * 10, 0), 100) + "%";
         document.getElementById('mP50').style.left = Math.min(Math.max(p50 * 10, 0), 100) + "%";
         document.getElementById('mP90').style.left = Math.min(Math.max(p90 * 10, 0), 100) + "%";
-        
-        document.getElementById('valP50').innerText = p50.toFixed(2);
-        document.getElementById('valMax').innerText = maxPuntsFletxa.toFixed(2);
+        document.getElementById('valP50').innerText = mitjana.toFixed(2);
+        document.getElementById('valMax').innerText = Math.max(...fletxes);
     }
 
     function calcPercentil(arr, p) {
-        if(arr.length === 0) return 0;
+        if (arr.length === 0) return 0;
         const pos = (arr.length - 1) * p;
         const base = Math.floor(pos);
         if (arr[base + 1] !== undefined) return arr[base] + (pos - base) * (arr[base + 1] - arr[base]);
         return arr[base];
     }
 
+    // ── CAIXA NEGRA LOCAL ─────────────────────────────────────────────────────
+
+    function exportarHistoricLocal() {
+        let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
+        if (hist.length === 0) { alert("No hi ha dades guardades localment."); return; }
+        let csv = "Data,Esdeveniment,Arc,Distancia,Punts,Deus,Ics,Detall\n" +
+            hist.map(h => `"${h.data}","${h.esdeveniment}","${h.arc}",${h.distancia},${h.punts},${h.deus},${h.ics},"${h.detall_tandes}"`).join('\n');
+        let blob = new Blob([csv], { type: 'text/csv' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a'); a.href = url; a.download = 'historic_privat_vig.csv'; a.click();
+    }
+
+    function esborrarHistoricLocal() {
+        if (confirm("Segur que vols buidar l'historial privat d'aquest dispositiu?")) {
+            localStorage.removeItem('vig_historic_privat');
+            alert("Memòria local buidada.");
+        }
+    }
+
     window.addEventListener('beforeunload', (e) => {
-        if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) { e.preventDefault(); e.returnValue = ''; }
+        if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) {
+            e.preventDefault(); e.returnValue = '';
+        }
     });
 </script>
 </body>
