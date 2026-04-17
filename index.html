@@ -634,11 +634,26 @@
         }
     }
 
+    // Registre del Service Worker per a la instal·lació PWA i caché offline
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW registrat:', reg.scope))
+                .catch(err => console.log('SW error:', err));
+        });
+    }
+
     window.addEventListener('beforeunload', (e) => {
         if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) {
             e.preventDefault(); e.returnValue = '';
         }
     });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js');
+        });
+    }
 </script>
 </body>
 </html>
