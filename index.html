@@ -239,12 +239,43 @@
         </div>
     </div>
 
+    <!-- PÀGINA: RÀNQUING -->
+    <div id="page-ranking" class="page">
+        <h2 style="text-align:center; color:var(--primary);">🏆 Rànquing del Club</h2>
+        <div class="info-tanda" style="text-align:left;">
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Esdeveniment:</label>
+            <select id="rkEsdeveniment" onchange="carregarRanking()" style="margin-bottom:10px;">
+                <option value="TOTS">Tots els esdeveniments</option>
+            </select>
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Distància:</label>
+            <select id="rkDistancia" onchange="carregarRanking()" style="margin-bottom:10px;">
+                <option value="TOTES">Totes les distàncies</option>
+                <option value="18">18 metres (Sala)</option>
+                <option value="30">30 metres</option>
+                <option value="50">50 metres</option>
+                <option value="60">60 metres</option>
+                <option value="70">70 metres</option>
+            </select>
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Tipus d'arc:</label>
+            <select id="rkArc" onchange="carregarRanking()" style="margin-bottom:0;">
+                <option value="TOTS">Tots els arcs</option>
+                <option value="Instintiu">Instintiu</option>
+                <option value="Nu">Arc Nu</option>
+                <option value="Longbow">Longbow</option>
+                <option value="Recorbat">Recorbat Olímpic</option>
+                <option value="Compost">Compost</option>
+            </select>
+        </div>
+        <div id="rankingLlista"></div>
+    </div>
+
 </div>
 
-<div class="navbar">
+<div class="navbar" style="font-size:0.7rem;">
     <div class="nav-btn active" id="btn-config" onclick="showPage('config')"><span class="nav-icon">⚙️</span>Config</div>
     <div class="nav-btn" id="btn-marcar" onclick="showPage('marcar')"><span class="nav-icon">🎯</span>Puntuar</div>
     <div class="nav-btn" id="btn-registre" onclick="showPage('registre')"><span class="nav-icon">📋</span>Registre</div>
+    <div class="nav-btn" id="btn-ranking" onclick="showPage('ranking')"><span class="nav-icon">🏆</span>Rànquing</div>
     <div class="nav-btn" id="btn-stats" onclick="showPage('stats')"><span class="nav-icon">📊</span>Stats</div>
 </div>
 
@@ -290,6 +321,7 @@
         }
         if (pageId === 'registre') renderRegistre();
         if (pageId === 'stats') carregarEstadistiques();
+        if (pageId === 'ranking') carregarRanking();
     }
 
     function guardarConfig() {
@@ -567,9 +599,13 @@
                 noms.map(n => `<option value="${n}">${n}</option>`).join('');
 
             const evs = [...new Set(dadesGlobals.map(d => camp(d, 'Esdeveniment', 'esdeveniment')))].filter(e => e);
-            document.getElementById('selEsdevenimentStats').innerHTML =
-                `<option value="TOTS">Tots els esdeveniments</option>` +
-                evs.map(e => `<option value="${e}">${e}</option>`).join('');
+            const opEv = `<option value="TOTS">Tots els esdeveniments</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
+            document.getElementById('selEsdevenimentStats').innerHTML = opEv;
+            document.getElementById('rkEsdeveniment').innerHTML = opEv;
+
+            const arcs = [...new Set(dadesGlobals.map(d => camp(d, 'Tipus d\'Arc', 'arc')))].filter(a => a);
+            document.getElementById('rkArc').innerHTML =
+                `<option value="TOTS">Tots els arcs</option>` + arcs.map(a => `<option value="${a}">${a}</option>`).join('');
 
             if (prop) {
                 if (noms.includes(prop)) document.getElementById('selArquerStats').value = prop;
@@ -650,6 +686,68 @@
         document.getElementById('valP10n').innerText = p10.toFixed(2);
         document.getElementById('valP50n').innerText = p50.toFixed(2);
         document.getElementById('valP90n').innerText = p90.toFixed(2);
+    }
+
+    function carregarRanking() {
+        const ev   = document.getElementById('rkEsdeveniment').value;
+        const dist = document.getElementById('rkDistancia').value;
+        const arc  = document.getElementById('rkArc').value;
+
+        let fil = [...dadesGlobals];
+        if (ev   !== 'TOTS')  fil = fil.filter(d => camp(d, 'Esdeveniment', 'esdeveniment') == ev);
+        if (dist !== 'TOTES') fil = fil.filter(d => camp(d, 'Distancia', 'Distància', 'distancia') == dist);
+        if (arc  !== 'TOTS')  fil = fil.filter(d => camp(d, "Tipus d'Arc", 'arc') == arc);
+
+        const prop = localStorage.getItem('vig_propietari') || '';
+
+        // Agrupar per arquer: millor puntuació, total tirades, total X i 10
+        const mapa = {};
+        fil.forEach(d => {
+            const nom   = camp(d, 'Arquer', 'arquer');
+            const punts = parseInt(camp(d, 'Punts Totals', 'punts')) || 0;
+            const deus  = parseInt(camp(d, 'Total 10', 'deus')) || 0;
+            const ics   = parseInt(camp(d, 'Total X', 'ics')) || 0;
+            if (!nom) return;
+            if (!mapa[nom]) mapa[nom] = { millor: 0, tirades: 0, deus: 0, ics: 0 };
+            if (punts > mapa[nom].millor) mapa[nom].millor = punts;
+            mapa[nom].tirades++;
+            mapa[nom].deus += deus;
+            mapa[nom].ics  += ics;
+        });
+
+        // Ordenar per millor puntuació
+        const llista = Object.entries(mapa).sort((a, b) => b[1].millor - a[1].millor);
+
+        if (llista.length === 0) {
+            document.getElementById('rankingLlista').innerHTML =
+                `<p style="text-align:center; color:#999;">Sense dades per als filtres seleccionats.</p>`;
+            return;
+        }
+
+        const medalles = ['🥇', '🥈', '🥉'];
+        let html = '';
+        llista.forEach(([nom, d], i) => {
+            const esProp   = nom === prop;
+            const posicio  = medalles[i] || `<span style="font-weight:bold; color:#999;">${i + 1}</span>`;
+            const destacat = esProp ? `border-left: 4px solid var(--groc); background: #fffde7;` : `border-left: 4px solid var(--primary);`;
+            html += `
+            <div style="background:white; padding:12px 15px; margin-bottom:10px; border-radius:8px;
+                        ${destacat} display:flex; align-items:center; justify-content:space-between;
+                        box-shadow:0 1px 3px rgba(0,0,0,0.07);">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:1.4rem; min-width:28px; text-align:center;">${posicio}</span>
+                    <div>
+                        <div style="font-weight:bold; color:var(--primary); font-size:1rem;">${nom}${esProp ? ' 📱' : ''}</div>
+                        <div style="font-size:0.75rem; color:#888; margin-top:2px;">${d.tirades} tirada${d.tirades !== 1 ? 's' : ''} · ${d.deus} desenes · ${d.ics} X's</div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:1.5rem; font-weight:bold; color:var(--primary);">${d.millor}</div>
+                    <div style="font-size:0.7rem; color:#aaa; text-transform:uppercase;">millor</div>
+                </div>
+            </div>`;
+        });
+        document.getElementById('rankingLlista').innerHTML = html;
     }
 
     function calcPercentil(arr, p) {
