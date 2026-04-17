@@ -472,10 +472,6 @@
     // ── ENVIAR AL CLUB ────────────────────────────────────────────────────────
 
     async function enviarAlClub() {
-        if (!document.getElementById('chkConsent').checked) {
-            alert("Has d'acceptar enviar les dades al club.");
-            return;
-        }
         let totalTandes = arquers.reduce((s, a) => s + a.tandes.length + (a.tandaActual.length > 0 ? 1 : 0), 0);
         if (totalTandes === 0) { alert("No hi ha cap fletxa apuntada!"); return; }
 
@@ -506,22 +502,28 @@
                 detall_tandes: detall.trim(), consentiment: "Sí"
             };
 
-            // Guardar historial local si és el propietari
+            // Guardar historial local sempre, independentment del consentiment
             if (arq.nom === prop) {
                 let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
                 hist.push({ ...dades, data: new Date().toLocaleString() });
                 localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
             }
 
-            promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dades) }));
+            // Enviar al club només si l'usuari ha marcat la casella
+            if (document.getElementById('chkConsent').checked) {
+                promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dades) }));
+            }
         });
 
         const btn = document.getElementById('btnEnviarClub');
         btn.innerText = "⏳ ENVIANT..."; btn.disabled = true;
 
         try {
-            await Promise.all(promeses);
-            alert("🏹 Tirada guardada amb èxit!");
+            if (promeses.length > 0) await Promise.all(promeses);
+            const missatge = promeses.length > 0
+                ? "🏹 Tirada guardada i enviada al club!"
+                : "🏹 Tirada guardada localment.";
+            alert(missatge);
             arquers.forEach(a => { a.tandes = []; a.tandaActual = []; });
             document.getElementById('chkConsent').checked = false;
             actualitzarMarcador();
