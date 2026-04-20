@@ -186,11 +186,34 @@
         if(p === 'ranking') renderRankingClub();
     }
 
-    function afegirSlotArquer() {
+function afegirSlotArquer() {
         const num = document.querySelectorAll('.arquer-config-box').length + 1;
         const div = document.createElement('div');
         div.className = 'arquer-config-box';
-        div.innerHTML = `<input type="text" class="inpNomArquer" placeholder="Arquer ${num}"><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><select class="inpArcArquer"><option value="Instintiu">Instintiu</option><option value="Nu">Nu</option><option value="Recorbat">Recorbat</option><option value="Compost">Compost</option></select><select class="inpCatArquer"><option value="Senior">Senior</option><option value="50+">50+</option><option value="U21">U21</option><option value="Roses">Flx. Roses</option></select></div>`;
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+                <label style="font-weight:bold; font-size:0.9rem;">Arquer ${num}</label>
+                ${num > 1 ? `<span style="color:red; cursor:pointer; font-weight:bold;" onclick="this.parentElement.parentElement.remove()">X</span>` : ''}
+            </div>
+            <input type="text" class="inpNomArquer" placeholder="Nom de l'arquer" style="margin-top:5px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <select class="inpArcArquer">
+                    <option value="Instintiu">Instintiu</option>
+                    <option value="Nu">Nu</option>
+                    <option value="Longbow">Longbow</option>
+                    <option value="Recorbat">Recorbat</option>
+                    <option value="Compost">Compost</option>
+                </select>
+                <select class="inpCatArquer">
+                    <option value="Senior">Senior</option>
+                    <option value="50+">50+</option>
+                    <option value="U21">U21</option>
+                    <option value="U18">U18</option>
+                    <option value="U15">U15</option>
+                    <option value="Roses">Flx. Roses</option>
+                </select>
+            </div>
+        `;
         document.getElementById('llistaArquersConfig').appendChild(div);
     }
 
