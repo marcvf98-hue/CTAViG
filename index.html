@@ -93,17 +93,13 @@
             
             <button class="btn-add" onclick="afegirSlotArquer()">+ Afegir company de diana</button>
             <button class="btn-action" style="padding:15px; font-size:1.1rem; border-radius:12px;" onclick="guardarConfig()">🏹 COMENÇAR TIRADA</button>
-            
             <hr style="border:0; border-top:1px solid #ccc; margin:30px 0 15px 0;">
             <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #fab1a0;">
-                <h3 style="color:#e17055; margin-top:0; font-size:1rem;">📱 Històric Privat Local</h3>
-                <p style="font-size:0.75rem; color:#636e72;">Dades guardades només en aquest mòbil.</p>
-                <button class="btn-action" style="background:#fab1a0; color:#d63031; margin-bottom:10px;" onclick="exportarHistoricLocal()">Descarregar Còpia (CSV)</button>
                 <button class="btn-danger" style="margin-bottom:0;" onclick="esborrarHistoricLocal()">Esborrar Memòria Local</button>
             </div>
         </div>
 
-        <div id="page-marcar" class="page">
+        <div id="page-anotar" class="page">
             <div class="archer-tabs" id="tabsArquers"></div>
             <div class="info-tanda">
                 <div id="txtTandaActual" style="font-weight:bold;">Entrada 1</div>
@@ -120,91 +116,58 @@
         </div>
 
         <div id="page-registre" class="page">
-            <h2>🏆 Rànquing Oficial</h2>
-            <div id="llistaTandes"></div>
+            <h2>📝 Registre de la Tirada</h2>
+            <div id="llistaTandesSessio"></div>
             <div style="background:white; padding:15px; border-radius:10px; display:flex; align-items:center; margin-bottom:20px; border:2px solid #2ecc71;">
                 <input type="checkbox" id="chkConsent" style="width:auto; margin-bottom:0; margin-right:10px; transform:scale(1.3);">
                 <label for="chkConsent" style="font-size:0.85rem; font-weight:bold;">Enviar dades al Rànquing del Club.</label>
             </div>
-            <button id="btnEnviarClub" class="btn-action" style="background:#2ecc71; padding:18px; font-size:1.1rem; border-radius:12px;" onclick="enviarAlClub()">📤 TANCAR I GUARDAR SESSIONS</button>
+            <button id="btnEnviarClub" class="btn-action" style="background:#2ecc71; padding:18px; font-size:1.1rem; border-radius:12px;" onclick="enviarAlClub()">📤 FINALITZAR I GUARDAR</button>
         </div>
 
         <div id="page-stats" class="page">
-            <h2>📊 El teu Rendiment</h2>
+            <h2>📊 Rendiment Personal</h2>
             <select id="selArquerStats" onchange="carregarEstadistiques()"></select>
-            <select id="selDistanciaStats" onchange="carregarEstadistiques()"><option value="TOTES">Totes les distàncies</option><option value="70">70m</option><option value="60">60m</option><option value="50">50m</option><option value="40">40m</option><option value="30">30m</option><option value="22">22m</option><option value="18">18m</option><option value="10">10m</option><option value="5">5m</option></select>
-            <select id="selEsdevenimentStats" onchange="carregarEstadistiques()"><option value="TOTS">Històric Global</option></select>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <select id="selDistanciaStats" onchange="carregarEstadistiques()"><option value="TOTES">Totes Dists.</option><option value="18">18m</option><option value="30">30m</option><option value="50">50m</option></select>
+                <select id="selEsdevenimentStats" onchange="carregarEstadistiques()"><option value="TOTS">Històric Global</option></select>
+            </div>
             
             <div class="info-tanda">
-                <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de Fletxes (P10 - Mediana - P90)</div>
                 <div class="dispersion-bar">
                     <div id="mP10" class="marker p10-90-marker"></div>
                     <div id="mP50" class="marker p50-marker"></div>
                     <div id="mP90" class="marker p10-90-marker"></div>
                 </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:bold; color:#555;">
-                    <span style="color:var(--vermell)">0(M)</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
-                    <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>MITJANA TOTAL</small><div id="valP50" style="font-size:1.5rem; font-weight:bold;">-</div></div>
-                    <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>FLETXA RÈCORD</small><div id="valMax" style="font-size:1.5rem; font-weight:bold; color:var(--blau)">-</div></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>MITJANA</small><div id="valP50" style="font-size:1.2rem; font-weight:bold;">-</div></div>
+                    <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>RÈCORD</small><div id="valMax" style="font-size:1.2rem; font-weight:bold; color:var(--blau)">-</div></div>
                 </div>
             </div>
+
+            <h2 style="margin-top:30px;">🏆 Rànquing del Club</h2>
+            <div id="taulaRankingClub">Cregant rànquing oficial...</div>
         </div>
     </div>
 
-    <div id="modalCanviArquer">
-        <div class="modal-content" style="max-width: 400px; padding: 25px; width: 90%;">
-            <h2 style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2>
-            <p style="margin-bottom: 5px;">Tanda completada de <b><span id="modCanviArquerPrev"></span></b>:</p>
-            <table class="official-table" style="margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                <thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead>
-                <tbody id="modCanviArquerTaula"></tbody>
-            </table>
-            <div style="background: #f1f2f6; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px dashed #ccc;">
-                <h3 style="margin: 0; color: #555; font-size:0.9rem;">Ara és el torn de:</h3>
-                <h2 style="margin: 5px 0 0 0; color: var(--blau); font-size: 1.8rem;" id="modCanviArquerNext"></h2>
-            </div>
-            <button onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width: 100%; font-size: 1.2rem; padding: 15px; border-radius:10px;">👉 CONTINUAR</button>
-        </div>
-    </div>
-
-    <div id="modalEdicio">
-        <div class="modal-content">
-            <h3 id="modArquerNom" style="margin-top:0; color:var(--primary);"></h3>
-            <p style="font-size:0.9rem; color:#666;">Edita Entrada <span id="modTandaNum"></span></p>
-            <div id="modFletxes" style="display:flex; justify-content:center; gap:5px; margin-bottom:20px;"></div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="tancarEdicio()" style="background:#7f8c8d; color:white; border:none; width:50%; border-radius:8px;">Cancel·lar</button>
-                <button onclick="guardarEdicio()" style="background:#27ae60; color:white; border:none; width:50%; border-radius:8px;">Guardar</button>
-            </div>
-        </div>
-    </div>
+    <div id="modalCanviArquer"><div class="modal-content"><h2 style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2><p>Tanda de <b><span id="modCanviArquerPrev"></span></b>:</p><table class="official-table" style="margin-bottom:20px;"><thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead><tbody id="modCanviArquerTaula"></tbody></table><div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;"><h3>Proxim torn:</h3><h2 id="modCanviArquerNext"></h2></div><button onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width:100%; padding:15px; border-radius:10px;">👉 CONTINUAR</button></div></div>
+    <div id="modalEdicio"><div class="modal-content"><h3 id="modArquerNom"></h3><p>Edita Entrada <span id="modTandaNum"></span></p><div id="modFletxes" style="display:flex; justify-content:center; gap:5px; margin-bottom:20px;"></div><div style="display:flex; gap:10px;"><button onclick="tancarEdicio()" style="background:#7f8c8d; color:white; border-radius:8px;">Cancel</button><button onclick="guardarEdicio()" style="background:#27ae60; color:white; border-radius:8px;">Guardar</button></div></div></div>
 
     <div class="navbar">
-        <div class="nav-btn active" id="btn-config" onclick="showPage('config')"><span style="font-size:1.2rem;">⚙️</span>Conf</div>
-        <div class="nav-btn" id="btn-marcar" onclick="showPage('marcar')"><span style="font-size:1.2rem;">🎯</span>Tirar</div>
-        <div class="nav-btn" id="btn-registre" onclick="showPage('registre')"><span style="font-size:1.2rem;">🏆</span>Rànquing</div>
-        <div class="nav-btn" id="btn-stats" onclick="showPage('stats')"><span style="font-size:1.2rem;">📊</span>Stats</div>
+        <div class="nav-btn active" id="btn-config" onclick="showPage('config')">⚙️<br>Conf</div>
+        <div class="nav-btn" id="btn-anotar" onclick="showPage('anotar')">🎯<br>Anotar</div>
+        <div class="nav-btn" id="btn-registre" onclick="showPage('registre')">📋<br>Registre</div>
+        <div class="nav-btn" id="btn-stats" onclick="showPage('stats')">📊<br>Stats</div>
     </div>
 
 <script>
-    let config = {}; 
-    let arquers = []; 
-    let arquerActiu = 0; 
-    let dadesGlobals = [];
-    let editIdx = { arq: -1, tanda: -1 };
-    
-    // URL DEL GOOGLE APPS SCRIPT
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxO_8wIlxuJAyg9Bl1cX-nzswk4PPLmV47Q-TCajvoPyKM7AFioDLZRTPotMKZB1Vd_/exec";
+    let config = {}; let arquers = []; let arquerActiu = 0; let dadesGlobals = []; let editIdx = { arq: -1, tanda: -1 };
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbz6K6Xp-LPzjkBsf-K2HxW4Dp3BRNzpwRq6yu1cRLzOoqE_3X_5_nP6mvIWlIOTjatD/exec";
 
     window.onload = function() {
         afegirSlotArquer(); 
         const prop = localStorage.getItem('vig_propietari');
-        if(prop) { 
-            document.querySelector('.inpNomArquer').value = prop; 
-            document.getElementById('txtPropietari').innerText = "Mòbil de " + prop;
-        }
+        if(prop) { document.querySelector('.inpNomArquer').value = prop; document.getElementById('txtPropietari').innerText = "Mòbil de " + prop; }
         fetchDades();
     };
 
@@ -213,60 +176,29 @@
         document.querySelectorAll('.nav-btn').forEach(bn => bn.classList.remove('active'));
         document.getElementById('page-' + p).classList.add('active');
         document.getElementById('btn-' + p).classList.add('active');
-        if(p === 'registre') renderRegistre();
-        if(p === 'stats') carregarEstadistiques();
+        if(p === 'registre') renderRegistreSessio();
+        if(p === 'stats') { carregarEstadistiques(); renderRankingClub(); }
     }
 
     function afegirSlotArquer() {
         const num = document.querySelectorAll('.arquer-config-box').length + 1;
         const div = document.createElement('div');
         div.className = 'arquer-config-box';
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between;">
-                <label style="font-weight:bold; font-size:0.9rem;">Arquer ${num}</label>
-                ${num > 1 ? `<span style="color:red; cursor:pointer; font-weight:bold;" onclick="this.parentElement.parentElement.remove()">X</span>` : ''}
-            </div>
-            <input type="text" class="inpNomArquer" placeholder="Nom de l'arquer" style="margin-top:5px;">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <select class="inpArcArquer">
-                    <option value="Instintiu">Instintiu</option><option value="Nu">Nu</option><option value="Longbow">Longbow</option>
-                    <option value="Recorbat">Recorbat</option><option value="Compost">Compost</option>
-                </select>
-                <select class="inpCatArquer">
-                    <option value="Senior">Senior</option><option value="50+">50+</option><option value="U21">U21</option>
-                    <option value="U18">U18</option><option value="U15">U15</option><option value="Roses">Flx. Roses</option>
-                </select>
-            </div>
-        `;
+        div.innerHTML = `<input type="text" class="inpNomArquer" placeholder="Arquer ${num}"><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><select class="inpArcArquer"><option value="Instintiu">Instintiu</option><option value="Nu">Nu</option><option value="Recorbat">Recorbat</option><option value="Compost">Compost</option></select><select class="inpCatArquer"><option value="Senior">Senior</option><option value="50+">50+</option><option value="U21">U21</option><option value="Roses">Flx. Roses</option></select></div>`;
         document.getElementById('llistaArquersConfig').appendChild(div);
     }
 
     function guardarConfig() {
-        config = { 
-            event: document.getElementById('cfgEvent').value, 
-            dist: document.getElementById('cfgDistancia').value, 
-            diana: document.getElementById('cfgDiana').value,
-            limit: document.getElementById('cfgFletxesMax').value 
-        };
-        
+        config = { event: document.getElementById('cfgEvent').value, dist: document.getElementById('cfgDistancia').value, diana: document.getElementById('cfgDiana').value, limit: document.getElementById('cfgFletxesMax').value };
         arquers = [];
-        let capError = false;
         document.querySelectorAll('.arquer-config-box').forEach((box, i) => {
             let nom = box.querySelector('.inpNomArquer').value.trim();
-            if(!nom) capError = true;
-            else {
-                if(i === 0) {
-                    localStorage.setItem('vig_propietari', nom); 
-                    document.getElementById('txtPropietari').innerText = "Mòbil de " + nom;
-                }
-                arquers.push({
-                    nom: nom, arc: box.querySelector('.inpArcArquer').value, categoria: box.querySelector('.inpCatArquer').value,
-                    tandes: [], tandaActual: []
-                });
+            if(nom) {
+                if(i===0) localStorage.setItem('vig_propietari', nom);
+                arquers.push({ nom, arc: box.querySelector('.inpArcArquer').value, categoria: box.querySelector('.inpCatArquer').value, tandes: [], tandaActual: [] });
             }
         });
-
-        if(capError || arquers.length === 0) return alert("Posa el nom a tots els arquers o elimina les caselles buides.");
+        if(arquers.length === 0) return alert("Posa almenys un nom.");
         arquerActiu = 0; renderTabs(); actualitzarMarcador(); showPage('marcar');
     }
 
@@ -274,7 +206,6 @@
         let arq = arquers[arquerActiu]; let max = parseInt(config.limit);
         if(arq.tandaActual.length < max) arq.tandaActual.push(v);
         actualitzarMarcador();
-        
         if(arq.tandaActual.length === max) {
             let seguent = (arquerActiu + 1) % arquers.length;
             if (arquers.length === 1) tancarEntradaActual();
@@ -283,146 +214,96 @@
     }
 
     function mostrarCanviArquer(prevIdx, nextIdx) {
-        let arqPrev = arquers[prevIdx]; let arqNext = arquers[nextIdx];
+        let arqPrev = arquers[prevIdx];
         document.getElementById('modCanviArquerPrev').innerText = arqPrev.nom;
-        document.getElementById('modCanviArquerNext').innerText = (nextIdx === 0) ? "FI DE L'ENTRADA (Tancar)" : arqNext.nom;
-
+        document.getElementById('modCanviArquerNext').innerText = (nextIdx === 0) ? "FI ENTRADA" : arquers[nextIdx].nom;
         let sorted = [...arqPrev.tandaActual].sort((a,b) => sortFletxes(b, a));
-        let s1Arr = sorted.slice(0,3); let s2Arr = sorted.slice(3,6);
-        let sum1 = calcularPunts(s1Arr); let sum2 = s2Arr.length > 0 ? calcularPunts(s2Arr) : 0;
-        
-        document.getElementById('modCanviArquerTaula').innerHTML = `<tr><td>${s1Arr.join(' ')}</td><td class="col-sum">${sum1}</td><td>${s2Arr.join(' ') || '-'}</td><td class="col-sum">${s2Arr.length>0 ? sum2 : '-'}</td><td class="col-total" style="font-size:1.2rem;">${sum1 + sum2}</td></tr>`;
+        document.getElementById('modCanviArquerTaula').innerHTML = `<tr><td>${sorted.slice(0,3).join(' ')}</td><td class="col-sum">${calcularPunts(sorted.slice(0,3))}</td><td>${sorted.slice(3,6).join(' ') || '-'}</td><td class="col-sum">${sorted.length>3 ? calcularPunts(sorted.slice(3,6)) : '-'}</td><td class="col-total">${calcularPunts(sorted)}</td></tr>`;
         document.getElementById('modalCanviArquer').style.display = 'flex';
     }
 
     function tancarCanviArquer() {
         document.getElementById('modalCanviArquer').style.display = 'none';
         let seguent = (arquerActiu + 1) % arquers.length;
-        if(seguent === 0) tancarEntradaActual(); 
-        else { arquerActiu = seguent; renderTabs(); actualitzarMarcador(); }
+        if(seguent === 0) tancarEntradaActual(); else { arquerActiu = seguent; renderTabs(); actualitzarMarcador(); }
     }
 
     function tancarEntradaActual() {
-        setTimeout(() => {
-            if(confirm("Tots els arquers han tirat. Vols tancar la tanda i passar a la següent?")) {
-                arquers.forEach(a => { a.tandes.push([...a.tandaActual]); a.tandaActual = []; });
-                arquerActiu = 0; renderTabs(); actualitzarMarcador();
-            }
-        }, 100);
+        if(confirm("Tancar entrada per a tots?")) {
+            arquers.forEach(a => { a.tandes.push([...a.tandaActual]); a.tandaActual = []; });
+            arquerActiu = 0; renderTabs(); actualitzarMarcador();
+        }
     }
 
     function actualitzarMarcador() {
         let arq = arquers[arquerActiu];
-        document.getElementById('txtTandaActual').innerText = arq.nom + " - Entrada " + (arq.tandes.length + 1);
+        document.getElementById('txtTandaActual').innerText = arq.nom + " - E" + (arq.tandes.length + 1);
         let visuals = [...arq.tandaActual].sort((a,b) => sortFletxes(b, a));
-        document.getElementById('txtFletxesActuals').innerHTML = `${visuals.slice(0,3).join(' ')} ${visuals.length >=3 ? ' <b style="color:var(--primary)">|</b> ' : ''} ${visuals.slice(3,6).join(' ')}`;
+        document.getElementById('txtFletxesActuals').innerHTML = `${visuals.slice(0,3).join(' ')} ${visuals.length>=3?'|':''} ${visuals.slice(3,6).join(' ')}`;
         document.getElementById('txtPuntsActuals').innerText = calcularPunts(arq.tandaActual);
     }
-    
+
     function sortFletxes(a, b) { let vA=a==='X'?11:(a==='M'?0:parseInt(a)); let vB=b==='X'?11:(b==='M'?0:parseInt(b)); return vA - vB; }
     function calcularPunts(arr) { return arr.reduce((s, f) => s + (f==='X'?10:(f==='M'?0:parseInt(f))), 0); }
     function desferUltima() { let arq = arquers[arquerActiu]; if(arq.tandaActual.length > 0) { arq.tandaActual.pop(); actualitzarMarcador(); } }
     function renderTabs() { document.getElementById('tabsArquers').innerHTML = arquers.map((a, i) => `<div class="archer-tab ${i===arquerActiu?'active':''}" onclick="arquerActiu=${i};renderTabs();actualitzarMarcador();">${a.nom}</div>`).join(''); }
 
-    function renderRegistre() {
+    // REGISTRE DE SESSIÓ (EL QUE HI HA A LA DIANA ARA)
+    function renderRegistreSessio() {
         let h = "";
-        let dadesRanking = arquers.map((arq, originalIdx) => {
-            let total = 0, deus = 0, ics = 0;
-            arq.tandes.flat().forEach(f => { if(f==='X'){ total+=10; ics++; deus++; } else if(f==10){ total+=10; deus++; } else if(f!=='M') total+=parseInt(f); });
-            return { originalIdx, nom: arq.nom, total, deus, ics, tandes: arq.tandes, arc: arq.arc, cat: arq.categoria };
-        });
-
-        dadesRanking.sort((a, b) => { if (b.total !== a.total) return b.total - a.total; if (b.deus !== a.deus) return b.deus - a.deus; return b.ics - a.ics; });
-
-        h += `<div style="background:white; border-radius:10px; padding:10px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                <table style="width:100%; border-collapse:collapse; text-align:center;">
-                    <thead><tr style="border-bottom:2px solid #eee; color:#7f8c8d; font-size:0.8rem;"><th style="padding:10px 5px;">Pos</th><th style="text-align:left;">Arquer</th><th>Punts</th><th>10/X</th></tr></thead>
-                    <tbody>`;
-        
-        dadesRanking.forEach((arq, i) => {
-            let medalla = i === 0 ? "🥇" : (i === 1 ? "🥈" : (i === 2 ? "🥉" : `<b>${i+1}</b>`));
-            h += `<tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="toggleDetall(${arq.originalIdx})">
-                    <td style="padding:12px 5px; font-size:1.2rem;">${medalla}</td><td style="text-align:left; font-weight:bold; color:var(--primary); font-size:1.1rem;">${arq.nom}</td>
-                    <td style="font-weight:bold; font-size:1.4rem; color:var(--blau);">${arq.total}</td><td style="font-size:0.8rem; color:#7f8c8d;">${arq.deus} / ${arq.ics}</td>
-                  </tr>`;
-        });
-        h += `</tbody></table><div style="font-size:0.75rem; color:#7f8c8d; text-align:center; margin-top:10px; padding:5px; background:#f5f6fa; border-radius:5px;">👆 Clica sobre un arquer per veure'n el detall 🎯</div></div>`;
-
         arquers.forEach((arq, aIdx) => {
             let acumulat = 0;
-            h += `<div id="detall-${aIdx}" style="display:none; background:#ecf0f1; padding:15px; border-radius:8px; margin-bottom:15px; border-left:5px solid var(--blau); box-shadow:0 4px 6px rgba(0,0,0,0.1); animation: fadeIn 0.3s;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                      <h3 style="margin:0; color:var(--primary);">📝 ${arq.nom}</h3>
-                      <button onclick="toggleDetall(${aIdx})" style="background:#e74c3c; color:white; border:none; border-radius:50%; width:30px; height:30px; font-weight:bold; cursor:pointer;">X</button>
-                  </div>
-                  <div style="font-size:0.85rem; margin-bottom:15px; color:#555; background:white; padding:8px; border-radius:5px;"><b>Arc:</b> ${arq.arc} &nbsp;|&nbsp; <b>Cat:</b> ${arq.categoria}</div>
-                  <table class="official-table" style="box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">RND</th><th class="col-total">ACUM</th><th></th></tr></thead><tbody>`;
+            h += `<div style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border-left:5px solid var(--primary);">
+                  <div style="display:flex; justify-content:space-between;"><b>👤 ${arq.nom}</b> <span onclick="toggleDetallSessio(${aIdx})" style="cursor:pointer">👁️</span></div>
+                  <div id="detall-sessio-${aIdx}" style="display:none; margin-top:10px;">
+                    <table class="official-table"><thead><tr><th>1-3</th><th>S1</th><th>4-6</th><th>S2</th><th>RND</th><th>ACU</th><th></th></tr></thead><tbody>`;
             arq.tandes.forEach((t, tIdx) => {
                 let sorted = [...t].sort((a,b) => sortFletxes(b, a));
-                let s1Arr = sorted.slice(0,3); let s2Arr = sorted.slice(3,6);
-                let sum1 = calcularPunts(s1Arr); let sum2 = s2Arr.length > 0 ? calcularPunts(s2Arr) : 0;
-                let tandaTotal = sum1 + sum2; acumulat += tandaTotal;
-                h += `<tr><td>${s1Arr.join(' ')}</td><td class="col-sum">${sum1}</td><td>${s2Arr.join(' ') || '-'}</td><td class="col-sum">${s2Arr.length>0?sum2:'-'}</td><td class="col-total">${tandaTotal}</td><td class="col-total">${acumulat}</td><td style="border:none; cursor:pointer;" onclick="obrirEdicio(${aIdx},${tIdx})">✏️</td></tr>`;
+                let s1 = calcularPunts(sorted.slice(0,3)), s2 = calcularPunts(sorted.slice(3,6));
+                acumulat += (s1+s2);
+                h += `<tr><td>${sorted.slice(0,3).join(' ')}</td><td>${s1}</td><td>${sorted.slice(3,6).join(' ')}</td><td>${s2}</td><td>${s1+s2}</td><td>${acumulat}</td><td onclick="obrirEdicio(${aIdx},${tIdx})">✏️</td></tr>`;
             });
-            h += `</tbody></table></div>`;
+            h += `</tbody></table></div><div style="text-align:right; font-weight:bold; margin-top:5px; color:var(--blau);">Puntuació: ${acumulat}</div></div>`;
         });
-        document.getElementById('llistaTandes').innerHTML = h || "<p>Sense dades.</p>";
+        document.getElementById('llistaTandesSessio').innerHTML = h || "Sense dades.";
     }
 
-    function toggleDetall(idx) {
-        let el = document.getElementById('detall-' + idx);
-        if (el.style.display === 'block') el.style.display = 'none';
-        else {
-            document.querySelectorAll('[id^="detall-"]').forEach(div => div.style.display = 'none');
-            el.style.display = 'block';
-            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-        }
-    }
+    function toggleDetallSessio(idx) { let el = document.getElementById('detall-sessio-'+idx); el.style.display = (el.style.display==='none'?'block':'none'); }
 
-    function obrirEdicio(ai, ti) {
-        editIdx = { arq: ai, tanda: ti }; let t = arquers[ai].tandes[ti];
-        document.getElementById('modArquerNom').innerText = arquers[ai].nom; document.getElementById('modTandaNum').innerText = ti + 1;
-        document.getElementById('modFletxes').innerHTML = t.map((f, i) => `<select id="modF${i}" style="width:auto; margin:0; font-weight:bold; font-size:1.1rem; padding:5px;">` + ['X','10','9','8','7','6','5','4','3','2','1','M'].map(o => `<option value="${o}" ${f.toString()===o?'selected':''}>${o}</option>`).join('') + `</select>`).join('');
-        document.getElementById('modalEdicio').style.display = 'flex';
-    }
-    
-    function tancarEdicio() { document.getElementById('modalEdicio').style.display = 'none'; }
-    
-    function guardarEdicio() {
-        arquers[editIdx.arq].tandes[editIdx.tanda] = arquers[editIdx.arq].tandes[editIdx.tanda].map((_, i) => { let v = document.getElementById('modF'+i).value; return (v === 'X' || v === 'M') ? v : parseInt(v); });
-        tancarEdicio(); renderRegistre();
-    }
-
-    async function enviarAlClub() {
-        const prop = localStorage.getItem('vig_propietari');
-        let promeses = [];
-        arquers.forEach(arq => {
-            let total = 0, deus = 0, ics = 0;
-            arq.tandes.flat().forEach(f => { if(f==='X'){ total+=10; ics++; deus++; } else if(f==10){ total+=10; deus++; } else if(f!=='M') total+=parseInt(f); });
+    // RÀNQUING DEL CLUB (HISTÒRIC DE GOOGLE SHEETS)
+    function renderRankingClub() {
+        if(!dadesGlobals || dadesGlobals.length === 0) return;
+        
+        // Agrupem per arquer i calculem la seva mitjana de fletxa all-time
+        let r = {};
+        dadesGlobals.forEach(d => {
+            let nom = d.Arquer; if(!nom) return;
+            if(!r[nom]) r[nom] = { punts: 0, fletxes: 0, sessions: 0, record: 0 };
             
-            const dades = { 
-                esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria,
-                distancia: config.dist, diana: config.diana, punts: total, deus: deus, ics: ics, 
-                detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ') 
-            };
-
-            // Guarda en Local si és el propietari
-            if(arq.nom === prop) {
-                let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
-                hist.push({...dades, data: new Date().toLocaleString()});
-                localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
+            let fletxesSessio = [];
+            let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
+            let regex = /\[(.*?)\]/g; let m;
+            while ((m = regex.exec(detall)) !== null) {
+                m[1].split(',').forEach(f => {
+                    let v = f.trim().toUpperCase();
+                    let val = (v==='X'?10:(v==='M'?0:parseInt(v)));
+                    if(!isNaN(val)) { fletxesSessio.push(val); r[nom].punts += val; r[nom].fletxes++; }
+                });
             }
-
-            // Envia a Google Sheets si hi ha consentiment
-            if(document.getElementById('chkConsent').checked) {
-                promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) }));
-            }
+            r[nom].sessions++;
+            if(d.Punts > r[nom].record) r[nom].record = d.Punts;
         });
 
-        if(promeses.length > 0) { document.getElementById('btnEnviarClub').innerText = "⏳ Enviant dades..."; await Promise.all(promeses); }
-        alert("Sessió guardada i finalitzada correctament!");
-        location.reload();
+        let llista = Object.keys(r).map(nom => ({ nom, mitjana: (r[nom].punts / r[nom].fletxes).toFixed(2), tirades: r[nom].sessions, record: r[nom].record }));
+        llista.sort((a,b) => b.mitjana - a.mitjana);
+
+        let h = `<table class="official-table"><thead><tr><th>Pos</th><th style="text-align:left">Arquer</th><th>Mitjana</th><th>Sess.</th><th>Rècord</th></tr></thead><tbody>`;
+        llista.forEach((arq, i) => {
+            let medalla = i===0?"🥇":(i===1?"🥈":(i===2?"🥉":i+1));
+            h += `<tr><td>${medalla}</td><td style="text-align:left"><b>${arq.nom}</b></td><td style="color:var(--blau); font-weight:bold;">${arq.mitjana}</td><td>${arq.tirades}</td><td>${arq.record}</td></tr>`;
+        });
+        h += `</tbody></table>`;
+        document.getElementById('taulaRankingClub').innerHTML = h;
     }
 
     async function fetchDades() {
@@ -435,7 +316,8 @@
             document.getElementById('selEsdevenimentStats').innerHTML = `<option value="TOTS">Històric Global</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
             const prop = localStorage.getItem('vig_propietari');
             if(prop && noms.includes(prop)) { document.getElementById('selArquerStats').value = prop; carregarEstadistiques(); }
-        } catch(e) { console.log("No s'han pogut carregar dades històriques."); }
+            renderRankingClub();
+        } catch(e) { console.log("Error de xarxa."); }
     }
 
     function carregarEstadistiques() {
@@ -447,61 +329,43 @@
         if(dist !== 'TOTES') fil = fil.filter(d => d.Distancia == dist || d['Distància'] == dist);
         if(ev !== 'TOTS') fil = fil.filter(d => (d.Esdeveniment || d.esdeveniment) == ev);
         
-        let fletxes = [];
+        let flx = [];
         fil.forEach(d => {
             let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
             let regex = /\[(.*?)\]/g; let m;
             while ((m = regex.exec(detall)) !== null) {
                 m[1].split(',').forEach(f => {
                     let v = f.trim().toUpperCase();
-                    if(v==='X') fletxes.push(10);
-                    else if(v==='M') fletxes.push(0);
-                    else if(!isNaN(parseInt(v))) fletxes.push(parseInt(v));
+                    if(v==='X') flx.push(10); else if(v==='M') flx.push(0); else if(!isNaN(parseInt(v))) flx.push(parseInt(v));
                 });
             }
         });
-
-        if(fletxes.length === 0) {
-            document.getElementById('valP50').innerText = "-"; document.getElementById('valMax').innerText = "-";
-            document.getElementById('mP10').style.left = "0%"; document.getElementById('mP50').style.left = "0%"; document.getElementById('mP90').style.left = "0%";
-            return;
-        }
-
-        fletxes.sort((a,b) => a-b);
-        const p10 = fletxes[Math.floor(fletxes.length * 0.1)];
-        const p50 = fletxes[Math.floor(fletxes.length * 0.5)];
-        const p90 = fletxes[Math.floor(fletxes.length * 0.9)];
-        
-        document.getElementById('mP10').style.left = (p10 * 10) + "%";
-        document.getElementById('mP50').style.left = (p50 * 10) + "%";
-        document.getElementById('mP90').style.left = (p90 * 10) + "%";
-        document.getElementById('valP50').innerText = (fletxes.reduce((a,b)=>a+b,0) / fletxes.length).toFixed(2);
-        document.getElementById('valMax').innerText = Math.max(...fletxes);
+        if(flx.length === 0) return;
+        flx.sort((a,b)=>a-b);
+        document.getElementById('mP10').style.left = (flx[Math.floor(flx.length*0.1)]*10)+"%";
+        document.getElementById('mP50').style.left = (flx[Math.floor(flx.length*0.5)]*10)+"%";
+        document.getElementById('mP90').style.left = (flx[Math.floor(flx.length*0.9)]*10)+"%";
+        document.getElementById('valP50').innerText = (flx.reduce((a,b)=>a+b,0)/flx.length).toFixed(2);
+        document.getElementById('valMax').innerText = Math.max(...flx);
     }
 
-    function esborrarHistoricLocal() { 
-        if(confirm("Segur que vols buidar el teu històric privat d'aquest mòbil?")) {
-            localStorage.removeItem('vig_historic_privat');
-            alert("Memòria local esborrada.");
-        }
-    }
-    
-    function exportarHistoricLocal() {
-        let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
-        if(hist.length === 0) return alert("No hi ha dades guardades al teu mòbil.");
-        let csv = "Data,Esdeveniment,Arc,Categoria,Distancia,Diana,Punts,Deus,Ics,Detall\n" + 
-                  hist.map(h => `"${h.data}","${h.esdeveniment}","${h.arc}","${h.categoria}","${h.distancia}","${h.diana}",${h.punts},${h.deus},${h.ics},"${h.detall_tandes}"`).join('\n');
-        let blob = new Blob([csv], {type: 'text/csv'});
-        let url = URL.createObjectURL(blob);
-        let a = document.createElement('a'); a.href = url; a.download = 'historic_privat_arquers_vig.csv'; a.click();
-    }
+    function obrirEdicio(ai, ti) { editIdx = { arq: ai, tanda: ti }; let t = arquers[ai].tandes[ti]; document.getElementById('modArquerNom').innerText = arquers[ai].nom; document.getElementById('modTandaNum').innerText = ti + 1; document.getElementById('modFletxes').innerHTML = t.map((f, i) => `<select id="modF${i}">` + ['X','10','9','8','7','6','5','4','3','2','1','M'].map(o => `<option value="${o}" ${f.toString()===o?'selected':''}>${o}</option>`).join('') + `</select>`).join(''); document.getElementById('modalEdicio').style.display = 'flex'; }
+    function tancarEdicio() { document.getElementById('modalEdicio').style.display = 'none'; }
+    function guardarEdicio() { arquers[editIdx.arq].tandes[editIdx.tanda] = arquers[editIdx.arq].tandes[editIdx.tanda].map((_, i) => { let v = document.getElementById('modF'+i).value; return (v === 'X' || v === 'M') ? v : parseInt(v); }); tancarEdicio(); renderRegistreSessio(); }
 
-    // PROTECCIÓ CONTRA REFRESC ACCIDENTAL
-    window.addEventListener('beforeunload', (e) => { 
-        if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) { 
-            e.preventDefault(); e.returnValue = ''; 
-        } 
-    });
+    async function enviarAlClub() {
+        let promeses = [];
+        arquers.forEach(arq => {
+            let total = 0, deus = 0, ics = 0;
+            arq.tandes.flat().forEach(f => { if(f==='X'){ total+=10; ics++; deus++; } else if(f==10){ total+=10; deus++; } else if(f!=='M') total+=parseInt(f); });
+            const dades = { esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria, distancia: config.dist, diana: config.diana, punts: total, deus, ics, detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ') };
+            if(document.getElementById('chkConsent').checked) promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) }));
+        });
+        if(promeses.length > 0) { document.getElementById('btnEnviarClub').innerText = "Enviant..."; await Promise.all(promeses); }
+        alert("Sessió guardada!"); location.reload();
+    }
+    function esborrarHistoricLocal() { if(confirm("Segur?")) localStorage.removeItem('vig_historic_privat'); }
+    window.addEventListener('beforeunload', (e) => { if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) { e.preventDefault(); e.returnValue = ''; } });
 </script>
 </body>
 </html>
