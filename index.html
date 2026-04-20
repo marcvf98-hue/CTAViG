@@ -13,7 +13,8 @@
         
         .club-header { background: var(--primary); color: white; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; width: 100%; z-index: 101; box-sizing: border-box; height: 70px; }
         .navbar { background: var(--primary); color: white; padding: 10px; display: flex; justify-content: space-around; position: fixed; bottom: 0; width: 100%; z-index: 100; font-size: 0.8rem; }
-        .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; width: 25%; display: flex; flex-direction: column; align-items: center; }
+        /* Canvi: width del 20% perquè hi càpiguen 5 botons */
+        .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; width: 20%; display: flex; flex-direction: column; align-items: center; }
         .nav-btn.active { opacity: 1; font-weight: bold; color: var(--groc); }
         
         .container { padding: 85px 15px 20px 15px; max-width: 500px; margin: auto; }
@@ -144,13 +145,15 @@
                     <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>RÈCORD</small><div id="valMax" style="font-size:1.2rem; font-weight:bold; color:var(--blau)">-</div></div>
                 </div>
             </div>
+        </div>
 
-            <h2 style="margin-top:30px;">🏆 Rànquing del Club</h2>
-            <div id="taulaRankingClub">Cregant rànquing oficial...</div>
+        <div id="page-ranking" class="page">
+            <h2>🏆 Rànquing del Club</h2>
+            <div id="taulaRankingClub">Cargant rànquing oficial...</div>
         </div>
     </div>
 
-    <div id="modalCanviArquer"><div class="modal-content"><h2 style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2><p>Tanda de <b><span id="modCanviArquerPrev"></span></b>:</p><table class="official-table" style="margin-bottom:20px;"><thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead><tbody id="modCanviArquerTaula"></tbody></table><div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;"><h3>Proxim torn:</h3><h2 id="modCanviArquerNext"></h2></div><button onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width:100%; padding:15px; border-radius:10px;">👉 CONTINUAR</button></div></div>
+    <div id="modalCanviArquer"><div class="modal-content"><h2 style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2><p>Tanda de <b><span id="modCanviArquerPrev"></span></b>:</p><table class="official-table" style="margin-bottom:20px;"><thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead><tbody id="modCanviArquerTaula"></tbody></table><div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;"><h3>Pròxim torn:</h3><h2 id="modCanviArquerNext"></h2></div><button onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width:100%; padding:15px; border-radius:10px;">👉 CONTINUAR</button></div></div>
     <div id="modalEdicio"><div class="modal-content"><h3 id="modArquerNom"></h3><p>Edita Entrada <span id="modTandaNum"></span></p><div id="modFletxes" style="display:flex; justify-content:center; gap:5px; margin-bottom:20px;"></div><div style="display:flex; gap:10px;"><button onclick="tancarEdicio()" style="background:#7f8c8d; color:white; border-radius:8px;">Cancel</button><button onclick="guardarEdicio()" style="background:#27ae60; color:white; border-radius:8px;">Guardar</button></div></div></div>
 
     <div class="navbar">
@@ -158,6 +161,7 @@
         <div class="nav-btn" id="btn-anotar" onclick="showPage('anotar')">🎯<br>Anotar</div>
         <div class="nav-btn" id="btn-registre" onclick="showPage('registre')">📋<br>Registre</div>
         <div class="nav-btn" id="btn-stats" onclick="showPage('stats')">📊<br>Stats</div>
+        <div class="nav-btn" id="btn-ranking" onclick="showPage('ranking')">🏆<br>Rànquing</div>
     </div>
 
 <script>
@@ -176,8 +180,10 @@
         document.querySelectorAll('.nav-btn').forEach(bn => bn.classList.remove('active'));
         document.getElementById('page-' + p).classList.add('active');
         document.getElementById('btn-' + p).classList.add('active');
+        
         if(p === 'registre') renderRegistreSessio();
-        if(p === 'stats') { carregarEstadistiques(); renderRankingClub(); }
+        if(p === 'stats') carregarEstadistiques();
+        if(p === 'ranking') renderRankingClub();
     }
 
     function afegirSlotArquer() {
@@ -199,7 +205,7 @@
             }
         });
         if(arquers.length === 0) return alert("Posa almenys un nom.");
-        arquerActiu = 0; renderTabs(); actualitzarMarcador(); showPage('marcar');
+        arquerActiu = 0; renderTabs(); actualitzarMarcador(); showPage('anotar');
     }
 
     function addFletxa(v) {
