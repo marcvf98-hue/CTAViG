@@ -186,7 +186,7 @@
         if(p === 'ranking') renderRankingClub();
     }
 
-function afegirSlotArquer() {
+    function afegirSlotArquer() {
         const num = document.querySelectorAll('.arquer-config-box').length + 1;
         const div = document.createElement('div');
         div.className = 'arquer-config-box';
@@ -223,7 +223,10 @@ function afegirSlotArquer() {
         document.querySelectorAll('.arquer-config-box').forEach((box, i) => {
             let nom = box.querySelector('.inpNomArquer').value.trim();
             if(nom) {
-                if(i===0) localStorage.setItem('vig_propietari', nom);
+                if(i===0) {
+                    localStorage.setItem('vig_propietari', nom);
+                    document.getElementById('txtPropietari').innerText = "Mòbil de " + nom;
+                }
                 arquers.push({ nom, arc: box.querySelector('.inpArcArquer').value, categoria: box.querySelector('.inpCatArquer').value, tandes: [], tandaActual: [] });
             }
         });
@@ -277,7 +280,7 @@ function afegirSlotArquer() {
     function desferUltima() { let arq = arquers[arquerActiu]; if(arq.tandaActual.length > 0) { arq.tandaActual.pop(); actualitzarMarcador(); } }
     function renderTabs() { document.getElementById('tabsArquers').innerHTML = arquers.map((a, i) => `<div class="archer-tab ${i===arquerActiu?'active':''}" onclick="arquerActiu=${i};renderTabs();actualitzarMarcador();">${a.nom}</div>`).join(''); }
 
-    // REGISTRE DE SESSIÓ (EL QUE HI HA A LA DIANA ARA)
+    // REGISTRE DE SESSIÓ
     function renderRegistreSessio() {
         let h = "";
         arquers.forEach((arq, aIdx) => {
@@ -299,31 +302,38 @@ function afegirSlotArquer() {
 
     function toggleDetallSessio(idx) { let el = document.getElementById('detall-sessio-'+idx); el.style.display = (el.style.display==='none'?'block':'none'); }
 
-    // RÀNQUING DEL CLUB (HISTÒRIC DE GOOGLE SHEETS)
+    // RÀNQUING DEL CLUB 
     function renderRankingClub() {
-        if(!dadesGlobals || dadesGlobals.length === 0) return;
+        if(!dadesGlobals || dadesGlobals.length === 0) {
+            document.getElementById('taulaRankingClub').innerHTML = "No s'han trobat dades històriques.";
+            return;
+        }
         
-        // Agrupem per arquer i calculem la seva mitjana de fletxa all-time
         let r = {};
         dadesGlobals.forEach(d => {
             let nom = d.Arquer; if(!nom) return;
             if(!r[nom]) r[nom] = { punts: 0, fletxes: 0, sessions: 0, record: 0 };
             
-            let fletxesSessio = [];
             let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
             let regex = /\[(.*?)\]/g; let m;
             while ((m = regex.exec(detall)) !== null) {
                 m[1].split(',').forEach(f => {
                     let v = f.trim().toUpperCase();
                     let val = (v==='X'?10:(v==='M'?0:parseInt(v)));
-                    if(!isNaN(val)) { fletxesSessio.push(val); r[nom].punts += val; r[nom].fletxes++; }
+                    if(!isNaN(val)) { r[nom].punts += val; r[nom].fletxes++; }
                 });
             }
             r[nom].sessions++;
             if(d.Punts > r[nom].record) r[nom].record = d.Punts;
         });
 
-        let llista = Object.keys(r).map(nom => ({ nom, mitjana: (r[nom].punts / r[nom].fletxes).toFixed(2), tirades: r[nom].sessions, record: r[nom].record }));
+        // Aplicat filtre anti-errors (divisió per 0)
+        let llista = Object.keys(r).map(nom => ({ 
+            nom: nom, 
+            mitjana: r[nom].fletxes > 0 ? (r[nom].punts / r[nom].fletxes).toFixed(2) : "0.00", 
+            tirades: r[nom].sessions, 
+            record: r[nom].record 
+        }));
         llista.sort((a,b) => b.mitjana - a.mitjana);
 
         let h = `<table class="official-table"><thead><tr><th>Pos</th><th style="text-align:left">Arquer</th><th>Mitjana</th><th>Sess.</th><th>Rècord</th></tr></thead><tbody>`;
@@ -346,7 +356,10 @@ function afegirSlotArquer() {
             const prop = localStorage.getItem('vig_propietari');
             if(prop && noms.includes(prop)) { document.getElementById('selArquerStats').value = prop; carregarEstadistiques(); }
             renderRankingClub();
-        } catch(e) { console.log("Error de xarxa."); }
+        } catch(e) { 
+            console.log("Error de xarxa."); 
+            document.getElementById('taulaRankingClub').innerHTML = "Error carregant dades del Google Sheets. Comprova els permisos del Script.";
+        }
     }
 
     function carregarEstadistiques() {
@@ -369,7 +382,11 @@ function afegirSlotArquer() {
                 });
             }
         });
-        if(flx.length === 0) return;
+        if(flx.length === 0) {
+            document.getElementById('valP50').innerText = "-";
+            document.getElementById('valMax').innerText = "-";
+            return;
+        }
         flx.sort((a,b)=>a-b);
         document.getElementById('mP10').style.left = (flx[Math.floor(flx.length*0.1)]*10)+"%";
         document.getElementById('mP50').style.left = (flx[Math.floor(flx.length*0.5)]*10)+"%";
@@ -383,18 +400,46 @@ function afegirSlotArquer() {
     function guardarEdicio() { arquers[editIdx.arq].tandes[editIdx.tanda] = arquers[editIdx.arq].tandes[editIdx.tanda].map((_, i) => { let v = document.getElementById('modF'+i).value; return (v === 'X' || v === 'M') ? v : parseInt(v); }); tancarEdicio(); renderRegistreSessio(); }
 
     async function enviarAlClub() {
+        const prop = localStorage.getItem('vig_propietari');
         let promeses = [];
         arquers.forEach(arq => {
             let total = 0, deus = 0, ics = 0;
             arq.tandes.flat().forEach(f => { if(f==='X'){ total+=10; ics++; deus++; } else if(f==10){ total+=10; deus++; } else if(f!=='M') total+=parseInt(f); });
             const dades = { esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria, distancia: config.dist, diana: config.diana, punts: total, deus, ics, detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ') };
-            if(document.getElementById('chkConsent').checked) promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) }));
+            
+            // GUARDEM EN LOCAL EL TEU HISTÒRIC (Caixa Negra)
+            if(arq.nom === prop) {
+                let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
+                hist.push({...dades, data: new Date().toLocaleString()});
+                localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
+            }
+
+            // ENVIEM A GOOGLE SHEETS
+            if(document.getElementById('chkConsent').checked) {
+                promeses.push(fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) }));
+            }
         });
-        if(promeses.length > 0) { document.getElementById('btnEnviarClub').innerText = "Enviant..."; await Promise.all(promeses); }
-        alert("Sessió guardada!"); location.reload();
+
+        if(promeses.length > 0) { 
+            document.getElementById('btnEnviarClub').innerText = "⏳ Enviant..."; 
+            await Promise.all(promeses); 
+        }
+        alert("Sessió guardada correctament!"); location.reload();
     }
-    function esborrarHistoricLocal() { if(confirm("Segur?")) localStorage.removeItem('vig_historic_privat'); }
-    window.addEventListener('beforeunload', (e) => { if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) { e.preventDefault(); e.returnValue = ''; } });
+
+    function esborrarHistoricLocal() { 
+        if(confirm("Segur que vols esborrar l'històric privat guardat en aquest dispositiu?")) {
+            localStorage.removeItem('vig_historic_privat');
+            alert("Memòria local esborrada.");
+        }
+    }
+    
+    // Protecció de refresc
+    window.addEventListener('beforeunload', (e) => { 
+        if (arquers.some(a => a.tandaActual.length > 0 || a.tandes.length > 0)) { 
+            e.preventDefault(); e.returnValue = ''; 
+        } 
+    });
 </script>
 </body>
 </html>
