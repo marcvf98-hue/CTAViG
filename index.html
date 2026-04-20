@@ -50,6 +50,8 @@
         .p50-marker { background: white; border: 1.5px solid black; z-index: 4; }
         .p10-90-marker { background: #111; border: 1.5px solid white; z-index: 3; }
         
+        .badge-info { background: #eaf3fb; border: 1px solid #b3d4f0; border-radius: 6px; padding: 8px 12px; font-size: 0.75rem; color: #1a5276; margin-bottom: 10px; line-height: 1.5; }
+
         #modalEdicio, #modalCanviArquer { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1005; align-items:center; justify-content:center; }
         .modal-content { background:white; padding:20px; border-radius:12px; width:90%; max-width:400px; text-align:center; }
         
@@ -162,10 +164,12 @@
         <div id="page-ranking" class="page">
             <h2 style="margin-bottom: 5px;">🏆 Rànquing del Club</h2>
             
-            <div style="display:flex; gap:10px; margin-bottom: 20px;">
+            <div style="display:flex; gap:10px; margin-bottom: 12px;">
                 <button id="btnRankingBrut" onclick="canviarTipusRanking('brut')" style="background:var(--primary); color:var(--groc); font-weight:bold; border:2px solid var(--primary); flex:1; padding:10px; border-radius:8px;">🏆 BRUT</button>
                 <button id="btnRankingPonderat" onclick="canviarTipusRanking('ponderat')" style="background:white; color:#666; font-weight:bold; border:2px solid #ccc; flex:1; padding:10px; border-radius:8px;">⚖️ PONDERAT</button>
             </div>
+
+            <div id="badgeRankingInfo" style="display:none;" class="badge-info"></div>
 
             <div id="taulaRankingClub">Carregant rànquing oficial...</div>
         </div>
@@ -298,7 +302,51 @@
     function desferUltima() { let arq = arquers[arquerActiu]; if(arq.tandaActual.length > 0) { arq.tandaActual.pop(); actualitzarMarcador(); } }
     function renderTabs() { document.getElementById('tabsArquers').innerHTML = arquers.map((a, i) => `<div class="archer-tab ${i===arquerActiu?'active':''}" onclick="arquerActiu=${i};renderTabs();actualitzarMarcador();">${a.nom}</div>`).join(''); }
 
-    // REGISTRE DE SESSIÓ ACTUAL
+    // --- SISTEMA DE PONDERACIÓ HÍBRID ---
+    // Part 1: Factors d'arc acordats per la Lliga ViG
+    // Basats en dades empíriques Archery GB (Portsmouth, 18m)
+    // Recorbat = referència; Compost = més fàcil (-10%); Nu/Instintiu = més difícil (+10/15%); Longbow = +15%
+    const factorArc = {
+        "Recorbat": 1.00,
+        "Compost":  0.90,
+        "Nu":       1.10,
+        "Instintiu":1.15,
+        "Longbow":  1.15
+    };
+
+    // Part 2: Normalització per distància — model Archery Australia (rating 1–125)
+    // Taules derivades de archeryscorepad.com: s50 = puntuació esperada a rating 50; s64 = a rating 64
+    // Format: WA 720 (72 fletxes) a diana 122cm. Distàncies 40m/10m/5m interpolades.
+    const tablesAA = {
+        "70": { s50: 384, s64: 499 },
+        "60": { s50: 447, s64: 544 },
+        "50": { s50: 508, s64: 587 },
+        "40": { s50: 528, s64: 601 },  // interpolat 30m-50m
+        "30": { s50: 548, s64: 616 },
+        "22": { s50: 533, s64: 607 },
+        "18": { s50: 530, s64: 606 },
+        "10": { s50: 570, s64: 645 },  // extrapolat (distància molt curta)
+        "5":  { s50: 600, s64: 672 }   // extrapolat (distància molt curta)
+    };
+
+    // Càlcul del rating Archery Australia per a una puntuació i distància donades
+    // Retorna un valor entre 1 i 125 (com més alt, millor)
+    function getRatingAA(score, dist) {
+        const t = tablesAA[String(dist)];
+        if (!t) return 50;
+        const r = 50 + (score - t.s50) * 14 / (t.s64 - t.s50);
+        return Math.max(1, Math.min(125, r));
+    }
+
+    // Índex híbrid = rating de distància (objectiu) × factor d'arc (convenció de lliga)
+    // Escala resultant: ~1–145 (depenent del factor d'arc màxim)
+    function calcularIndexHibrid(puntsBruts, arc, distancia) {
+        const rating = getRatingAA(puntsBruts, distancia);
+        const fArc = factorArc[arc] || 1.0;
+        return rating * fArc;
+    }
+
+    // --- REGISTRE DE SESSIÓ ACTUAL ---
     function renderRegistreSessio() {
         let h = "";
         arquers.forEach((arq, aIdx) => {
@@ -320,41 +368,28 @@
 
     function toggleDetallSessio(idx) { let el = document.getElementById('detall-sessio-'+idx); el.style.display = (el.style.display==='none'?'block':'none'); }
 
-    // --- LOGICA RÀNQUING I STATS ---
+    // --- LÒGICA RÀNQUING ---
     let tipusRankingActual = 'brut';
 
     function canviarTipusRanking(tipus) {
         tipusRankingActual = tipus;
-        if(tipus === 'brut') {
-            document.getElementById('btnRankingBrut').style.background = 'var(--primary)';
-            document.getElementById('btnRankingBrut').style.color = 'var(--groc)';
-            document.getElementById('btnRankingBrut').style.border = '2px solid var(--primary)';
-            document.getElementById('btnRankingPonderat').style.background = 'white';
-            document.getElementById('btnRankingPonderat').style.color = '#666';
-            document.getElementById('btnRankingPonderat').style.border = '2px solid #ccc';
-        } else {
-            document.getElementById('btnRankingPonderat').style.background = 'var(--primary)';
-            document.getElementById('btnRankingPonderat').style.color = 'var(--groc)';
-            document.getElementById('btnRankingPonderat').style.border = '2px solid var(--primary)';
-            document.getElementById('btnRankingBrut').style.background = 'white';
-            document.getElementById('btnRankingBrut').style.color = '#666';
-            document.getElementById('btnRankingBrut').style.border = '2px solid #ccc';
-        }
+        const actiu = tipus === 'brut' ? 'btnRankingBrut' : 'btnRankingPonderat';
+        const inactiu = tipus === 'brut' ? 'btnRankingPonderat' : 'btnRankingBrut';
+        document.getElementById(actiu).style.cssText = 'background:var(--primary); color:var(--groc); font-weight:bold; border:2px solid var(--primary); flex:1; padding:10px; border-radius:8px;';
+        document.getElementById(inactiu).style.cssText = 'background:white; color:#666; font-weight:bold; border:2px solid #ccc; flex:1; padding:10px; border-radius:8px;';
         renderRankingClub();
     }
 
-    const factorArc = { "Compost": 0.90, "Recorbat": 1.0, "Nu": 1.10, "Instintiu": 1.15, "Longbow": 1.20 };
-    const factorDiana = { "122": 1.0, "80": 1.2, "60": 1.4, "40": 1.6 };
-    const factorDistancia = { "18": 1.0, "22": 1.1, "30": 1.25, "40": 1.4, "50": 1.6, "60": 1.8, "70": 2.0, "10": 0.8, "5": 0.5 };
-
-    function calcularPuntsPonderats(puntsBruts, arc, diana, distancia) {
-        let fArc = factorArc[arc] || 1.0;
-        let fDiana = factorDiana[diana] || 1.0;
-        let fDist = factorDistancia[distancia] || 1.0;
-        return puntsBruts * fArc * fDiana * fDist;
-    }
-
     function renderRankingClub() {
+        const badge = document.getElementById('badgeRankingInfo');
+        if (tipusRankingActual === 'ponderat') {
+            badge.style.display = 'block';
+            badge.innerHTML = `<b>⚖️ Índex híbrid</b> = rating per distància (model Archery Australia) × factor d'arc de la Lliga.<br>
+            Recorbat ×1.00 · Compost ×0.90 · Nu ×1.10 · Instintiu ×1.15 · Longbow ×1.15`;
+        } else {
+            badge.style.display = 'none';
+        }
+
         if(!dadesGlobals || dadesGlobals.length === 0) {
             document.getElementById('taulaRankingClub').innerHTML = "No s'han trobat dades històriques.";
             return;
@@ -375,7 +410,7 @@
         let r = {};
         dadesFiltrades.forEach(d => {
             let nom = d.Arquer; if(!nom) return;
-            if(!r[nom]) r[nom] = { puntsBruts: 0, puntsPond: 0, fletxes: 0, sessions: 0, recordBrut: 0, recordPond: 0 };
+            if(!r[nom]) r[nom] = { puntsBruts: 0, indexPond: 0, fletxes: 0, sessions: 0, recordBrut: 0, recordIndex: 0 };
             
             let puntsSessio = 0;
             let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
@@ -392,31 +427,29 @@
                 });
             }
             
-            let arc = d.Arc || "Compost";
-            let diana = d.Diana || "122";
+            let arc = d.Arc || "Recorbat";
             let distancia = d.Distancia || d['Distància'] || "18";
-            let sessioPond = calcularPuntsPonderats(puntsSessio, arc, diana, distancia);
+            let sessioIndex = calcularIndexHibrid(puntsSessio, arc, distancia);
             
-            r[nom].puntsPond += sessioPond;
+            r[nom].indexPond += sessioIndex;
             r[nom].sessions++;
             
             if(puntsSessio > r[nom].recordBrut) r[nom].recordBrut = puntsSessio;
-            if(sessioPond > r[nom].recordPond) r[nom].recordPond = sessioPond;
+            if(sessioIndex > r[nom].recordIndex) r[nom].recordIndex = sessioIndex;
         });
 
         let llista = Object.keys(r).map(nom => {
             if (tipusRankingActual === 'brut') {
-                return { nom: nom, mitjana: r[nom].fletxes > 0 ? (r[nom].puntsBruts / r[nom].fletxes).toFixed(2) : "0.00", tirades: r[nom].sessions, record: r[nom].recordBrut };
+                return { nom, record: r[nom].recordBrut, mitjana: r[nom].fletxes > 0 ? (r[nom].puntsBruts / r[nom].fletxes).toFixed(2) : "0.00", tirades: r[nom].sessions };
             } else {
-                return { nom: nom, mitjana: r[nom].fletxes > 0 ? (r[nom].puntsPond / r[nom].fletxes).toFixed(2) : "0.00", tirades: r[nom].sessions, record: r[nom].recordPond.toFixed(1) };
+                return { nom, record: r[nom].recordIndex.toFixed(1), mitjana: r[nom].sessions > 0 ? (r[nom].indexPond / r[nom].sessions).toFixed(1) : "0.0", tirades: r[nom].sessions };
             }
         });
         
-        // Ordenem per rècord descendent
         llista.sort((a,b) => parseFloat(b.record) - parseFloat(a.record));
 
-        let titolMitjana = tipusRankingActual === 'brut' ? "Mitjana" : "Mitj. ⚖️";
-        let titolRecord = tipusRankingActual === 'brut' ? "Rècord" : "Rèc. ⚖️";
+        const titolRecord = tipusRankingActual === 'brut' ? "Rècord" : "Índex màx.";
+        const titolMitjana = tipusRankingActual === 'brut' ? "Mitj./fletxa" : "Mitj./sessió";
 
         let h = `<table class="official-table"><thead><tr><th>Pos</th><th style="text-align:left">Arquer</th><th>${titolRecord}</th><th>${titolMitjana}</th><th>Sess.</th></tr></thead><tbody>`;
         llista.forEach((arq, i) => {
@@ -443,54 +476,57 @@
 
             sessionsArquer.forEach(sessio => {
                 let dataStr = new Date(sessio.Data || sessio.data).toLocaleDateString();
-                let puntsSessio = sessio.Punts || sessio.punts || 0;
-                let arcSess = sessio.Arc || "Compost";
-                let distSess = sessio.Distancia || sessio['Distància'] || "18";
-                let dianaSess = sessio.Diana || "122";
+                let detallSessioStr = sessio['Detall Tandes'] || sessio.detall_tandes || "";
                 
-                let puntsAmostrar = puntsSessio;
-                if(tipusRankingActual === 'ponderat') {
-                    puntsAmostrar = calcularPuntsPonderats(puntsSessio, arcSess, dianaSess, distSess).toFixed(1) + " ⚖️";
+                let puntsSessio = 0;
+                let regexCalc = /\[(.*?)\]/g; let mCalc;
+                while ((mCalc = regexCalc.exec(detallSessioStr)) !== null) {
+                    mCalc[1].split(',').forEach(f => {
+                        let v = f.trim().toUpperCase();
+                        let val = (v==='X'?10:(v==='M'?0:parseInt(v)));
+                        if(!isNaN(val)) puntsSessio += val;
+                    });
                 }
 
-                // Generació de la taula detallada
-                let detallSessioStr = sessio['Detall Tandes'] || sessio.detall_tandes || "";
-                let taulaHTML = "";
+                let arcSess = sessio.Arc || "Recorbat";
+                let distSess = sessio.Distancia || sessio['Distància'] || "18";
                 
+                let puntsAmostrar;
+                if(tipusRankingActual === 'ponderat') {
+                    let idx = calcularIndexHibrid(puntsSessio, arcSess, distSess);
+                    let ratingBrut = getRatingAA(puntsSessio, distSess);
+                    let fArc = factorArc[arcSess] || 1.0;
+                    puntsAmostrar = `${idx.toFixed(1)} ⚖️ <span style="font-size:0.7rem; color:#888;">(rating ${ratingBrut.toFixed(1)} × ${fArc.toFixed(2)})</span>`;
+                } else {
+                    puntsAmostrar = puntsSessio;
+                }
+
+                let taulaHTML = "";
                 if (detallSessioStr) {
-                    let regex = /\[(.*?)\]/g; 
-                    let m;
+                    let regex2 = /\[(.*?)\]/g; let m2;
                     let tandesA = [];
-                    while ((m = regex.exec(detallSessioStr)) !== null) {
-                        tandesA.push(m[1].split(',').map(a => a.trim()));
+                    while ((m2 = regex2.exec(detallSessioStr)) !== null) {
+                        tandesA.push(m2[1].split(',').map(a => a.trim()));
                     }
-                    
                     if(tandesA.length > 0) {
                         taulaHTML = `<table class="official-table" style="margin-top:10px; font-size:0.75rem; box-shadow: none; border: 1px solid #eee;">
-                                        <thead><tr><th>1-3</th><th>S1</th><th>4-6</th><th>S2</th><th>RND</th><th>ACU</th></tr></thead>
-                                        <tbody>`;
+                                        <thead><tr><th>1-3</th><th>S1</th><th>4-6</th><th>S2</th><th>RND</th><th>ACU</th></tr></thead><tbody>`;
                         let acumulat = 0;
                         tandesA.forEach(t => {
                             let sorted = [...t].sort((a,b) => sortFletxes(b, a));
                             let s1 = calcularPunts(sorted.slice(0,3));
                             let s2 = calcularPunts(sorted.slice(3,6));
                             acumulat += (s1+s2);
-                            taulaHTML += `<tr>
-                                            <td>${sorted.slice(0,3).join(' ')}</td><td class="col-sum">${s1}</td>
-                                            <td>${sorted.slice(3,6).join(' ')}</td><td class="col-sum">${s2}</td>
-                                            <td style="font-weight:bold;">${s1+s2}</td><td class="col-total">${acumulat}</td>
-                                          </tr>`;
+                            taulaHTML += `<tr><td>${sorted.slice(0,3).join(' ')}</td><td class="col-sum">${s1}</td><td>${sorted.slice(3,6).join(' ')}</td><td class="col-sum">${s2}</td><td style="font-weight:bold;">${s1+s2}</td><td class="col-total">${acumulat}</td></tr>`;
                         });
                         taulaHTML += `</tbody></table>`;
-                    } else {
-                        taulaHTML = `<div style="color:#666; font-size:0.75rem; margin-top:5px; text-align:center; padding:10px;">Sense detall de fletxes per a aquesta sessió.</div>`;
                     }
                 }
                 
                 h += `<div style="background:white; padding:10px; margin-bottom:8px; border-radius:6px; border-left:4px solid ${tipusRankingActual === 'brut' ? 'var(--blau)' : '#9b59b6'}; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                         <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; color:#333; font-size:0.9rem;">
                             <span>${dataStr} <span style="font-weight:normal; font-size:0.75rem; color:#888;">(${arcSess} ${distSess}m)</span></span>
-                            <span style="color:var(--primary); font-size:1.1rem;">🎯 ${puntsAmostrar}</span>
+                            <span style="color:var(--primary); font-size:1.0rem;">🎯 ${puntsAmostrar}</span>
                         </div>
                         ${taulaHTML}
                       </div>`;
@@ -548,20 +584,12 @@
         });
 
         if(flx.length === 0) {
-            document.getElementById('valMin').innerText = "-";
-            document.getElementById('valMitjana').innerText = "-";
-            document.getElementById('valMax').innerText = "-";
-            document.getElementById('valQ10').innerText = "-";
-            document.getElementById('valQ50').innerText = "-";
-            document.getElementById('valQ90').innerText = "-";
-            document.getElementById('mP10').style.left = "0%";
-            document.getElementById('mP50').style.left = "0%";
-            document.getElementById('mP90').style.left = "0%";
+            ['valMin','valMitjana','valMax','valQ10','valQ50','valQ90'].forEach(id => document.getElementById(id).innerText = "-");
+            ['mP10','mP50','mP90'].forEach(id => document.getElementById(id).style.left = "0%");
             return;
         }
 
         flx.sort((a,b)=>a-b);
-        
         let q10 = flx[Math.floor(flx.length*0.1)];
         let q50 = flx[Math.floor(flx.length*0.5)];
         let q90 = flx[Math.floor(flx.length*0.9)];
@@ -606,9 +634,7 @@
                 try {
                     await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) });
                     await new Promise(resolve => setTimeout(resolve, 500)); 
-                } catch(error) {
-                    console.error("Error enviant dades de", arq.nom, error);
-                }
+                } catch(error) { console.error("Error enviant dades de", arq.nom, error); }
             }
         }
 
