@@ -137,14 +137,24 @@
             </div>
             
             <div class="info-tanda">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de fletxes (Q10 - Q50 - Q90)</div>
                 <div class="dispersion-bar">
                     <div id="mP10" class="marker p10-90-marker"></div>
                     <div id="mP50" class="marker p50-marker"></div>
                     <div id="mP90" class="marker p10-90-marker"></div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>MITJANA</small><div id="valP50" style="font-size:1.2rem; font-weight:bold;">-</div></div>
-                    <div class="info-tanda" style="margin-bottom:0; padding:10px;"><small>RÈCORD</small><div id="valMax" style="font-size:1.2rem; font-weight:bold; color:var(--blau)">-</div></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:bold; color:#555;">
+                    <span style="color:var(--vermell)">0(M)</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:20px;">
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MÍNIM</small><div id="valMin" style="font-size:1.4rem; font-weight:bold; color:var(--vermell)">-</div></div>
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MITJANA</small><div id="valMitjana" style="font-size:1.4rem; font-weight:bold;">-</div></div>
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MÀXIM</small><div id="valMax" style="font-size:1.4rem; font-weight:bold; color:var(--blau)">-</div></div>
+                    
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">Q10</small><div id="valQ10" style="font-size:1.2rem; font-weight:bold;">-</div></div>
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">Q50 (Med)</small><div id="valQ50" style="font-size:1.2rem; font-weight:bold;">-</div></div>
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">Q90</small><div id="valQ90" style="font-size:1.2rem; font-weight:bold;">-</div></div>
                 </div>
             </div>
         </div>
@@ -310,7 +320,7 @@
 
     function toggleDetallSessio(idx) { let el = document.getElementById('detall-sessio-'+idx); el.style.display = (el.style.display==='none'?'block':'none'); }
 
-    // --- LOGICA DEL RÀNQUING ---
+    // --- LOGICA RÀNQUING I STATS ---
     let tipusRankingActual = 'brut';
 
     function canviarTipusRanking(tipus) {
@@ -402,20 +412,22 @@
             }
         });
         
-        llista.sort((a,b) => parseFloat(b.mitjana) - parseFloat(a.mitjana));
+        // Ordenem per rècord
+        llista.sort((a,b) => parseFloat(b.record) - parseFloat(a.record));
 
         let titolMitjana = tipusRankingActual === 'brut' ? "Mitjana" : "Mitj. ⚖️";
         let titolRecord = tipusRankingActual === 'brut' ? "Rècord" : "Rèc. ⚖️";
 
-        let h = `<table class="official-table"><thead><tr><th>Pos</th><th style="text-align:left">Arquer</th><th>${titolMitjana}</th><th>Sess.</th><th>${titolRecord}</th></tr></thead><tbody>`;
+        let h = `<table class="official-table"><thead><tr><th>Pos</th><th style="text-align:left">Arquer</th><th>${titolRecord}</th><th>${titolMitjana}</th><th>Sess.</th></tr></thead><tbody>`;
         llista.forEach((arq, i) => {
             let medalla = i===0?"🥇":(i===1?"🥈":(i===2?"🥉":i+1));
+            
             h += `<tr style="cursor:pointer; transition:0.2s; border-bottom:1px solid #eee;" onclick="toggleDetallRanking(${i})">
                     <td style="padding:10px 2px; font-size:1.1rem;">${medalla}</td>
                     <td style="text-align:left"><b>${arq.nom}</b></td>
-                    <td style="color:var(--blau); font-weight:bold; font-size:1.1rem;">${arq.mitjana}</td>
-                    <td>${arq.tirades}</td>
-                    <td style="font-weight:bold; color:#555;">${arq.record}</td>
+                    <td style="font-weight:bold; color:var(--blau); font-size:1.1rem;">${arq.record}</td>
+                    <td style="color:#555;">${arq.mitjana}</td>
+                    <td style="color:#555;">${arq.tirades}</td>
                   </tr>`;
             
             h += `<tr id="detall-ranking-${i}" style="display:none;">
@@ -469,7 +481,6 @@
         }
     }
 
-    // CARREGAR DADES I STATS
     async function fetchDades() {
         try {
             const res = await fetch(URL_SCRIPT);
@@ -489,6 +500,7 @@
         const dist = document.getElementById('selDistanciaStats').value;
         const ev = document.getElementById('selEsdevenimentStats').value;
         if(!arq) return;
+        
         let fil = dadesGlobals.filter(d => d.Arquer === arq);
         if(dist !== 'TOTES') fil = fil.filter(d => d.Distancia == dist || d['Distància'] == dist);
         if(ev !== 'TOTS') fil = fil.filter(d => (d.Esdeveniment || d.esdeveniment) == ev);
@@ -504,17 +516,39 @@
                 });
             }
         });
+
         if(flx.length === 0) {
-            document.getElementById('valP50').innerText = "-";
+            document.getElementById('valMin').innerText = "-";
+            document.getElementById('valMitjana').innerText = "-";
             document.getElementById('valMax').innerText = "-";
+            document.getElementById('valQ10').innerText = "-";
+            document.getElementById('valQ50').innerText = "-";
+            document.getElementById('valQ90').innerText = "-";
+            document.getElementById('mP10').style.left = "0%";
+            document.getElementById('mP50').style.left = "0%";
+            document.getElementById('mP90').style.left = "0%";
             return;
         }
+
         flx.sort((a,b)=>a-b);
-        document.getElementById('mP10').style.left = (flx[Math.floor(flx.length*0.1)]*10)+"%";
-        document.getElementById('mP50').style.left = (flx[Math.floor(flx.length*0.5)]*10)+"%";
-        document.getElementById('mP90').style.left = (flx[Math.floor(flx.length*0.9)]*10)+"%";
-        document.getElementById('valP50').innerText = (flx.reduce((a,b)=>a+b,0)/flx.length).toFixed(2);
-        document.getElementById('valMax').innerText = Math.max(...flx);
+        
+        let q10 = flx[Math.floor(flx.length*0.1)];
+        let q50 = flx[Math.floor(flx.length*0.5)];
+        let q90 = flx[Math.floor(flx.length*0.9)];
+        let min = Math.min(...flx);
+        let max = Math.max(...flx);
+        let mitjana = (flx.reduce((a,b)=>a+b,0)/flx.length).toFixed(2);
+
+        document.getElementById('mP10').style.left = (q10 * 10) + "%";
+        document.getElementById('mP50').style.left = (q50 * 10) + "%";
+        document.getElementById('mP90').style.left = (q90 * 10) + "%";
+
+        document.getElementById('valMin').innerText = min;
+        document.getElementById('valMitjana').innerText = mitjana;
+        document.getElementById('valMax').innerText = max;
+        document.getElementById('valQ10').innerText = q10;
+        document.getElementById('valQ50').innerText = q50;
+        document.getElementById('valQ90').innerText = q90;
     }
 
     function obrirEdicio(ai, ti) { editIdx = { arq: ai, tanda: ti }; let t = arquers[ai].tandes[ti]; document.getElementById('modArquerNom').innerText = arquers[ai].nom; document.getElementById('modTandaNum').innerText = ti + 1; document.getElementById('modFletxes').innerHTML = t.map((f, i) => `<select id="modF${i}">` + ['X','10','9','8','7','6','5','4','3','2','1','M'].map(o => `<option value="${o}" ${f.toString()===o?'selected':''}>${o}</option>`).join('') + `</select>`).join(''); document.getElementById('modalEdicio').style.display = 'flex'; }
@@ -532,18 +566,16 @@
             arq.tandes.flat().forEach(f => { if(f==='X'){ total+=10; ics++; deus++; } else if(f==10){ total+=10; deus++; } else if(f!=='M') total+=parseInt(f); });
             const dades = { esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria, distancia: config.dist, diana: config.diana, punts: total, deus, ics, detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ') };
             
-            // GUARDAT LOCAL (Caixa Negra)
             if(arq.nom === prop) {
                 let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
                 hist.push({...dades, data: new Date().toLocaleString()});
                 localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
             }
 
-            // ENVIAMENT AL CLUB SEQÜENCIAL
             if(document.getElementById('chkConsent').checked) {
                 try {
                     await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) });
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Pausa de 0.5s perquè Google Sheets no col·lapsi
+                    await new Promise(resolve => setTimeout(resolve, 500)); 
                 } catch(error) {
                     console.error("Error enviant dades de", arq.nom, error);
                 }
