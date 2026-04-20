@@ -343,7 +343,7 @@
         renderRankingClub();
     }
 
-    const factorArc = { "Compost": 0.90, "Recorbat": 1, "Nu": 1.10, "Instintiu": 1.15, "Longbow": 1.20 };
+    const factorArc = { "Compost": 0.90, "Recorbat": 1.0, "Nu": 1.10, "Instintiu": 1.15, "Longbow": 1.20 };
     const factorDiana = { "122": 1.0, "80": 1.2, "60": 1.4, "40": 1.6 };
     const factorDistancia = { "18": 1.0, "22": 1.1, "30": 1.25, "40": 1.4, "50": 1.6, "60": 1.8, "70": 2.0, "10": 0.8, "5": 0.5 };
 
@@ -412,7 +412,7 @@
             }
         });
         
-        // Ordenem per rècord
+        // Ordenem per rècord descendent
         llista.sort((a,b) => parseFloat(b.record) - parseFloat(a.record));
 
         let titolMitjana = tipusRankingActual === 'brut' ? "Mitjana" : "Mitj. ⚖️";
@@ -453,16 +453,46 @@
                     puntsAmostrar = calcularPuntsPonderats(puntsSessio, arcSess, dianaSess, distSess).toFixed(1) + " ⚖️";
                 }
 
-                let detallSessio = sessio['Detall Tandes'] || sessio.detall_tandes || "Sense detall";
+                // Generació de la taula detallada
+                let detallSessioStr = sessio['Detall Tandes'] || sessio.detall_tandes || "";
+                let taulaHTML = "";
+                
+                if (detallSessioStr) {
+                    let regex = /\[(.*?)\]/g; 
+                    let m;
+                    let tandesA = [];
+                    while ((m = regex.exec(detallSessioStr)) !== null) {
+                        tandesA.push(m[1].split(',').map(a => a.trim()));
+                    }
+                    
+                    if(tandesA.length > 0) {
+                        taulaHTML = `<table class="official-table" style="margin-top:10px; font-size:0.75rem; box-shadow: none; border: 1px solid #eee;">
+                                        <thead><tr><th>1-3</th><th>S1</th><th>4-6</th><th>S2</th><th>RND</th><th>ACU</th></tr></thead>
+                                        <tbody>`;
+                        let acumulat = 0;
+                        tandesA.forEach(t => {
+                            let sorted = [...t].sort((a,b) => sortFletxes(b, a));
+                            let s1 = calcularPunts(sorted.slice(0,3));
+                            let s2 = calcularPunts(sorted.slice(3,6));
+                            acumulat += (s1+s2);
+                            taulaHTML += `<tr>
+                                            <td>${sorted.slice(0,3).join(' ')}</td><td class="col-sum">${s1}</td>
+                                            <td>${sorted.slice(3,6).join(' ')}</td><td class="col-sum">${s2}</td>
+                                            <td style="font-weight:bold;">${s1+s2}</td><td class="col-total">${acumulat}</td>
+                                          </tr>`;
+                        });
+                        taulaHTML += `</tbody></table>`;
+                    } else {
+                        taulaHTML = `<div style="color:#666; font-size:0.75rem; margin-top:5px; text-align:center; padding:10px;">Sense detall de fletxes per a aquesta sessió.</div>`;
+                    }
+                }
                 
                 h += `<div style="background:white; padding:10px; margin-bottom:8px; border-radius:6px; border-left:4px solid ${tipusRankingActual === 'brut' ? 'var(--blau)' : '#9b59b6'}; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:bold; color:#333; font-size:0.9rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; color:#333; font-size:0.9rem;">
                             <span>${dataStr} <span style="font-weight:normal; font-size:0.75rem; color:#888;">(${arcSess} ${distSess}m)</span></span>
-                            <span style="color:var(--primary);">🎯 ${puntsAmostrar} pts</span>
+                            <span style="color:var(--primary); font-size:1.1rem;">🎯 ${puntsAmostrar}</span>
                         </div>
-                        <div style="color:#666; font-family:monospace; font-size:0.75rem; word-wrap:break-word; line-height:1.4;">
-                            ${detallSessio}
-                        </div>
+                        ${taulaHTML}
                       </div>`;
             });
             h += `</div></td></tr>`;
