@@ -6,17 +6,21 @@
     <title>App Club Arquers ViG</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e272e">
-    <link rel="apple-touch-icon" href="Logo_CTAViG.png">
+    <link class="apple-touch-icon" href="Logo_CTAViG.png">
     <style>
         :root { --groc: #FFEB3B; --vermell: #f44336; --blau: #2196F3; --negre: #424242; --blanc: #FFFFFF; --primary: #1e272e; --bg: #f5f6fa; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); overscroll-behavior-y: contain; padding-bottom: 90px; }
         
-        .club-header { background: var(--primary); color: white; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; width: 100%; z-index: 101; box-sizing: border-box; height: 70px; }
+        .club-header { background: var(--primary); color: white; padding: 10px 15px; display: flex; flex-direction: column; justify-content: center; position: fixed; top: 0; width: 100%; z-index: 101; box-sizing: border-box; height: 115px; }
+        .header-top { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 40px; }
+        .header-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 5px; }
+        .header-filters select { margin-bottom: 0; padding: 6px; font-size: 0.85rem; background: #2c3a47; color: white; border: 1px solid #485460; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        
         .navbar { background: var(--primary); color: white; padding: 10px; display: flex; justify-content: space-around; position: fixed; bottom: 0; width: 100%; z-index: 100; font-size: 0.8rem; }
         .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; width: 20%; display: flex; flex-direction: column; align-items: center; }
         .nav-btn.active { opacity: 1; font-weight: bold; color: var(--groc); }
         
-        .container { padding: 85px 15px 20px 15px; max-width: 500px; margin: auto; }
+        .container { padding: 130px 15px 20px 15px; max-width: 500px; margin: auto; }
         .page { display: none; } .page.active { display: block; }
         
         input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
@@ -60,10 +64,23 @@
 </head>
 <body>
     <div class="club-header">
-        <div style="font-weight:bold; font-size:1.2rem; display:flex; align-items:center;">
-            <img src="Logo_CTAViG.png" height="40" style="margin-right:10px;" alt="Logo" onerror="this.style.display='none'"> Arquers ViG
+        <div class="header-top">
+            <div style="font-weight:bold; font-size:1.2rem; display:flex; align-items:center;">
+                <img src="Logo_CTAViG.png" height="35" style="margin-right:10px;" alt="Logo" onerror="this.style.display='none'"> Arquers ViG
+            </div>
+            <div id="txtPropietari" style="font-size:0.7rem; opacity:0.8; text-align:right;"></div>
         </div>
-        <div id="txtPropietari" style="font-size:0.7rem; opacity:0.8; text-align:right;"></div>
+        <div class="header-filters">
+            <select id="selDistanciaStats" onchange="carregarEstadistiques(); renderRankingClub();">
+                <option value="TOTES">Totes Dists.</option>
+                <option value="70">70m</option><option value="60">60m</option><option value="50">50m</option>
+                <option value="40">40m</option><option value="30">30m</option><option value="22">22m</option>
+                <option value="18">18m</option><option value="10">10m</option><option value="5">5m</option>
+            </select>
+            <select id="selEsdevenimentStats" onchange="carregarEstadistiques(); renderRankingClub();">
+                <option value="TOTS">Històric Global</option>
+            </select>
+        </div>
     </div>
 
     <div class="container">
@@ -133,10 +150,6 @@
         <div id="page-stats" class="page">
             <h2>📊 Rendiment Personal</h2>
             <select id="selArquerStats" onchange="carregarEstadistiques()"></select>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <select id="selDistanciaStats" onchange="carregarEstadistiques(); renderRankingClub();"><option value="TOTES">Totes Dists.</option><option value="70">70m</option><option value="60">60m</option><option value="50">50m</option><option value="40">40m</option><option value="30">30m</option><option value="22">22m</option><option value="18">18m</option><option value="10">10m</option><option value="5">5m</option></select>
-                <select id="selEsdevenimentStats" onchange="carregarEstadistiques(); renderRankingClub();"><option value="TOTS">Històric Global</option></select>
-            </div>
             
             <div class="info-tanda">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de fletxes (Q10 - Q50 - Q90)</div>
@@ -170,7 +183,6 @@
             </div>
 
             <div id="badgeRankingInfo" style="display:none;" class="badge-info"></div>
-
             <div id="taulaRankingClub">Carregant rànquing oficial...</div>
         </div>
     </div>
@@ -220,11 +232,11 @@
             <input type="text" class="inpNomArquer" placeholder="Nom de l'arquer" style="margin-top:5px;">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <select class="inpArcArquer">
-                    <option value="Instintiu">Instintiu</option>
-                    <option value="Nu">Nu</option>
-                    <option value="Longbow">Longbow</option>
                     <option value="Recorbat">Recorbat</option>
                     <option value="Compost">Compost</option>
+                    <option value="Nu">Nu</option>
+                    <option value="Instintiu">Instintiu</option>
+                    <option value="Longbow">Longbow</option>
                 </select>
                 <select class="inpCatArquer">
                     <option value="Senior">Senior</option>
@@ -302,35 +314,14 @@
     function desferUltima() { let arq = arquers[arquerActiu]; if(arq.tandaActual.length > 0) { arq.tandaActual.pop(); actualitzarMarcador(); } }
     function renderTabs() { document.getElementById('tabsArquers').innerHTML = arquers.map((a, i) => `<div class="archer-tab ${i===arquerActiu?'active':''}" onclick="arquerActiu=${i};renderTabs();actualitzarMarcador();">${a.nom}</div>`).join(''); }
 
-    // --- SISTEMA DE PONDERACIÓ HÍBRID ---
-    // Part 1: Factors d'arc acordats per la Lliga ViG
-    // Basats en dades empíriques Archery GB (Portsmouth, 18m)
-    // Recorbat = referència; Compost = més fàcil (-10%); Nu/Instintiu = més difícil (+10/15%); Longbow = +15%
-    const factorArc = {
-        "Recorbat": 1.00,
-        "Compost":  0.90,
-        "Nu":       1.10,
-        "Instintiu":1.15,
-        "Longbow":  1.15
-    };
+    const factorArc = { "Recorbat": 1.00, "Compost": 0.90, "Nu": 1.10, "Instintiu": 1.15, "Longbow": 1.15 };
 
-    // Part 2: Normalització per distància — model Archery Australia (rating 1–125)
-    // Taules derivades de archeryscorepad.com: s50 = puntuació esperada a rating 50; s64 = a rating 64
-    // Format: WA 720 (72 fletxes) a diana 122cm. Distàncies 40m/10m/5m interpolades.
     const tablesAA = {
-        "70": { s50: 384, s64: 499 },
-        "60": { s50: 447, s64: 544 },
-        "50": { s50: 508, s64: 587 },
-        "40": { s50: 528, s64: 601 },  // interpolat 30m-50m
-        "30": { s50: 548, s64: 616 },
-        "22": { s50: 533, s64: 607 },
-        "18": { s50: 530, s64: 606 },
-        "10": { s50: 570, s64: 645 },  // extrapolat (distància molt curta)
-        "5":  { s50: 600, s64: 672 }   // extrapolat (distància molt curta)
+        "70": { s50: 384, s64: 499 }, "60": { s50: 447, s64: 544 }, "50": { s50: 508, s64: 587 },
+        "40": { s50: 528, s64: 601 }, "30": { s50: 548, s64: 616 }, "22": { s50: 533, s64: 607 },
+        "18": { s50: 530, s64: 606 }, "10": { s50: 570, s64: 645 }, "5":  { s50: 600, s64: 672 }
     };
 
-    // Càlcul del rating Archery Australia per a una puntuació i distància donades
-    // Retorna un valor entre 1 i 125 (com més alt, millor)
     function getRatingAA(score, dist) {
         const t = tablesAA[String(dist)];
         if (!t) return 50;
@@ -338,15 +329,12 @@
         return Math.max(1, Math.min(125, r));
     }
 
-    // Índex híbrid = rating de distància (objectiu) × factor d'arc (convenció de lliga)
-    // Escala resultant: ~1–145 (depenent del factor d'arc màxim)
     function calcularIndexHibrid(puntsBruts, arc, distancia) {
         const rating = getRatingAA(puntsBruts, distancia);
         const fArc = factorArc[arc] || 1.0;
         return rating * fArc;
     }
 
-    // --- REGISTRE DE SESSIÓ ACTUAL ---
     function renderRegistreSessio() {
         let h = "";
         arquers.forEach((arq, aIdx) => {
@@ -368,7 +356,6 @@
 
     function toggleDetallSessio(idx) { let el = document.getElementById('detall-sessio-'+idx); el.style.display = (el.style.display==='none'?'block':'none'); }
 
-    // --- LÒGICA RÀNQUING ---
     let tipusRankingActual = 'brut';
 
     function canviarTipusRanking(tipus) {
@@ -398,7 +385,7 @@
         const dist = document.getElementById('selDistanciaStats').value;
         const ev = document.getElementById('selEsdevenimentStats').value;
         
-        let dadesFiltrades = dadesGlobals;
+        let dadesFiltrades = dadesGlobals.filter(d => !d.isLocal);
         if(dist !== 'TOTES') dadesFiltrades = dadesFiltrades.filter(d => d.Distancia == dist || d['Distància'] == dist);
         if(ev !== 'TOTS') dadesFiltrades = dadesFiltrades.filter(d => (d.Esdeveniment || d.esdeveniment) == ev);
 
@@ -413,6 +400,7 @@
             if(!r[nom]) r[nom] = { puntsBruts: 0, indexPond: 0, fletxes: 0, sessions: 0, recordBrut: 0, recordIndex: 0 };
             
             let puntsSessio = 0;
+            let fletxesSessio = 0;
             let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
             let regex = /\[(.*?)\]/g; let m;
             while ((m = regex.exec(detall)) !== null) {
@@ -423,13 +411,15 @@
                         r[nom].puntsBruts += val; 
                         puntsSessio += val;
                         r[nom].fletxes++; 
+                        fletxesSessio++;
                     }
                 });
             }
             
             let arc = d.Arc || "Recorbat";
             let distancia = d.Distancia || d['Distància'] || "18";
-            let sessioIndex = calcularIndexHibrid(puntsSessio, arc, distancia);
+            let puntsNormalitzats = fletxesSessio > 0 ? (puntsSessio / fletxesSessio) * 72 : 0;
+            let sessioIndex = calcularIndexHibrid(puntsNormalitzats, arc, distancia);
             
             r[nom].indexPond += sessioIndex;
             r[nom].sessions++;
@@ -475,16 +465,18 @@
             sessionsArquer.sort((a,b) => new Date(b.Data || b.data) - new Date(a.Data || a.data));
 
             sessionsArquer.forEach(sessio => {
-                let dataStr = new Date(sessio.Data || sessio.data).toLocaleDateString();
+                let dataStr = "";
+                try { dataStr = new Date(sessio.Data || sessio.data).toLocaleDateString(); } catch(e) { dataStr = "Data s/n"; }
                 let detallSessioStr = sessio['Detall Tandes'] || sessio.detall_tandes || "";
                 
                 let puntsSessio = 0;
+                let fletxesSessio = 0;
                 let regexCalc = /\[(.*?)\]/g; let mCalc;
                 while ((mCalc = regexCalc.exec(detallSessioStr)) !== null) {
                     mCalc[1].split(',').forEach(f => {
                         let v = f.trim().toUpperCase();
                         let val = (v==='X'?10:(v==='M'?0:parseInt(v)));
-                        if(!isNaN(val)) puntsSessio += val;
+                        if(!isNaN(val)) { puntsSessio += val; fletxesSessio++; }
                     });
                 }
 
@@ -493,8 +485,9 @@
                 
                 let puntsAmostrar;
                 if(tipusRankingActual === 'ponderat') {
-                    let idx = calcularIndexHibrid(puntsSessio, arcSess, distSess);
-                    let ratingBrut = getRatingAA(puntsSessio, distSess);
+                    let puntsNormalitzats = fletxesSessio > 0 ? (puntsSessio / fletxesSessio) * 72 : 0;
+                    let idx = calcularIndexHibrid(puntsNormalitzats, arcSess, distSess);
+                    let ratingBrut = getRatingAA(puntsNormalitzats, distSess);
                     let fArc = factorArc[arcSess] || 1.0;
                     puntsAmostrar = `${idx.toFixed(1)} ⚖️ <span style="font-size:0.7rem; color:#888;">(rating ${ratingBrut.toFixed(1)} × ${fArc.toFixed(2)})</span>`;
                 } else {
@@ -505,17 +498,14 @@
                 if (detallSessioStr) {
                     let regex2 = /\[(.*?)\]/g; let m2;
                     let tandesA = [];
-                    while ((m2 = regex2.exec(detallSessioStr)) !== null) {
-                        tandesA.push(m2[1].split(',').map(a => a.trim()));
-                    }
+                    while ((m2 = regex2.exec(detallSessioStr)) !== null) { tandesA.push(m2[1].split(',').map(a => a.trim())); }
                     if(tandesA.length > 0) {
                         taulaHTML = `<table class="official-table" style="margin-top:10px; font-size:0.75rem; box-shadow: none; border: 1px solid #eee;">
                                         <thead><tr><th>1-3</th><th>S1</th><th>4-6</th><th>S2</th><th>RND</th><th>ACU</th></tr></thead><tbody>`;
                         let acumulat = 0;
                         tandesA.forEach(t => {
                             let sorted = [...t].sort((a,b) => sortFletxes(b, a));
-                            let s1 = calcularPunts(sorted.slice(0,3));
-                            let s2 = calcularPunts(sorted.slice(3,6));
+                            let s1 = calcularPunts(sorted.slice(0,3)), s2 = calcularPunts(sorted.slice(3,6));
                             acumulat += (s1+s2);
                             taulaHTML += `<tr><td>${sorted.slice(0,3).join(' ')}</td><td class="col-sum">${s1}</td><td>${sorted.slice(3,6).join(' ')}</td><td class="col-sum">${s2}</td><td style="font-weight:bold;">${s1+s2}</td><td class="col-total">${acumulat}</td></tr>`;
                         });
@@ -550,11 +540,28 @@
     async function fetchDades() {
         try {
             const res = await fetch(URL_SCRIPT);
-            dadesGlobals = await res.json();
+            const dadesServidor = await res.json();
+            
+            const histLocal = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
+            
+            const localNormalitzat = histLocal.map(l => ({
+                Arquer: l.arquer, Esdeveniment: l.esdeveniment, Arc: l.arc, Categoria: l.categoria,
+                Distancia: l.distancia, Diana: l.diana, Punts: l.punts, Deus: l.deus, Ics: l.ics,
+                'Detall Tandes': l.detall_tandes, Data: l.data, isLocal: true
+            }));
+
+            const localSenseDuplicats = localNormalitzat.filter(l => 
+                !dadesServidor.some(s => s.Arquer === l.Arquer && (s['Detall Tandes'] || s['detall_tandes']) === l['Detall Tandes'])
+            );
+
+            dadesGlobals = [...dadesServidor, ...localSenseDuplicats];
+
             const noms = [...new Set(dadesGlobals.map(d => d.Arquer))].filter(n => n);
             document.getElementById('selArquerStats').innerHTML = noms.map(n => `<option value="${n}">${n}</option>`).join('');
+            
             const evs = [...new Set(dadesGlobals.map(d => d.Esdeveniment || d.esdeveniment))].filter(e => e);
             document.getElementById('selEsdevenimentStats').innerHTML = `<option value="TOTS">Històric Global</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
+            
             const prop = localStorage.getItem('vig_propietari');
             if(prop && noms.includes(prop)) { document.getElementById('selArquerStats').value = prop; carregarEstadistiques(); }
             renderRankingClub();
@@ -626,7 +633,7 @@
             
             if(arq.nom === prop) {
                 let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
-                hist.push({...dades, data: new Date().toLocaleString()});
+                hist.push({...dades, data: new Date().toISOString()});
                 localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
             }
 
