@@ -154,7 +154,7 @@
             </div>
             
             <div class="info-tanda">
-                <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de fletxes (Q10 - Q50 - Q90)</div>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de fletxes ($Q_{10}$ - $Q_{50}$ - $Q_{90}$)</div>
                 <div class="dispersion-bar">
                     <div id="mP10" class="marker p10-90-marker"></div>
                     <div id="mP50" class="marker p50-marker"></div>
@@ -593,7 +593,6 @@
             
             const evs = [...new Set(dadesGlobals.map(d => d.Esdeveniment || d.esdeveniment))].filter(e => e);
             
-            // Omplim els selectors de les dues pestanyes
             const desplegableHTML = `<option value="TOTS">Històric Global</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
             document.getElementById('selEsdevenimentStats').innerHTML = desplegableHTML;
             document.getElementById('selEsdevenimentRanking').innerHTML = desplegableHTML;
