@@ -6,7 +6,7 @@
     <title>App Club Arquers ViG</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e272e">
-    <link class="apple-touch-icon" href="Logo_CTAViG.png">
+    <link rel="apple-touch-icon" href="Logo_CTAViG.png">
     <style>
         :root { --groc: #FFEB3B; --vermell: #f44336; --blau: #2196F3; --negre: #424242; --blanc: #FFFFFF; --primary: #1e272e; --bg: #f5f6fa; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); overscroll-behavior-y: contain; padding-bottom: 90px; }
@@ -118,6 +118,9 @@
                 <p style="font-size:0.75rem; color:#636e72;">Dades guardades en aquest dispositiu.</p>
                 <button class="btn-action" style="background:#fab1a0; color:#d63031; margin-bottom:10px;" onclick="exportarHistoricLocal()">Descarregar Còpia (CSV)</button>
                 <button class="btn-danger" style="margin-bottom:0;" onclick="esborrarHistoricLocal()">Esborrar Memòria Local</button>
+            </div>
+            <div style="text-align: center; font-size: 0.7rem; color: #a4b0be; margin-top: 25px; font-family: monospace;">
+                Versió: 2026.06.20 (Filtres Globals + Fusió de Noms)
             </div>
         </div>
 
@@ -550,20 +553,47 @@
                 'Detall Tandes': l.detall_tandes, Data: l.data, isLocal: true
             }));
 
+            const normalitzarText = (t) => t ? t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+
+            localNormalitzat.forEach(l => {
+                const matchServidor = dadesServidor.find(s => {
+                    const nS = normalitzarText(s.Arquer || s.arquer);
+                    const nL = normalitzarText(l.Arquer);
+                    return nS === nL || nS.includes(nL) || nL.includes(nS);
+                });
+                if (matchServidor) {
+                    l.Arquer = matchServidor.Arquer || matchServidor.arquer;
+                }
+            });
+
             const localSenseDuplicats = localNormalitzat.filter(l => 
-                !dadesServidor.some(s => s.Arquer === l.Arquer && (s['Detall Tandes'] || s['detall_tandes']) === l['Detall Tandes'])
+                !dadesServidor.some(s => {
+                    const nomS = normalitzarText(s.Arquer || s.arquer);
+                    const nomL = normalitzarText(l.Arquer);
+                    const detallS = (s['Detall Tandes'] || s['detall_tandes'] || "").trim();
+                    const detallL = (l['Detall Tandes'] || "").trim();
+                    return nomS === nomL && detallS === detallL;
+                })
             );
 
             dadesGlobals = [...dadesServidor, ...localSenseDuplicats];
 
-            const noms = [...new Set(dadesGlobals.map(d => d.Arquer))].filter(n => n);
+            const noms = [...new Set(dadesGlobals.map(d => d.Arquer || d.arquer))].filter(n => n);
             document.getElementById('selArquerStats').innerHTML = noms.map(n => `<option value="${n}">${n}</option>`).join('');
             
             const evs = [...new Set(dadesGlobals.map(d => d.Esdeveniment || d.esdeveniment))].filter(e => e);
             document.getElementById('selEsdevenimentStats').innerHTML = `<option value="TOTS">Històric Global</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
             
             const prop = localStorage.getItem('vig_propietari');
-            if(prop && noms.includes(prop)) { document.getElementById('selArquerStats').value = prop; carregarEstadistiques(); }
+            if(prop) {
+                const nomCoincident = noms.find(n => normalitzarText(n) === normalitzarText(prop) || normalitzarText(n).includes(normalitzarText(prop)) || normalitzarText(prop).includes(normalitzarText(n)));
+                if(nomCoincident) {
+                    document.getElementById('selArquerStats').value = nomCoincident;
+                    localStorage.setItem('vig_propietari', nomCoincident);
+                    document.getElementById('txtPropietari').innerText = "Mòbil de " + nomCoincident;
+                }
+            }
+            carregarEstadistiques();
             renderRankingClub();
         } catch(e) { console.log("Error de xarxa.", e); document.getElementById('taulaRankingClub').innerHTML = "Error carregant dades del servidor."; }
     }
@@ -574,9 +604,21 @@
         const ev = document.getElementById('selEsdevenimentStats').value;
         if(!arq) return;
         
-        let fil = dadesGlobals.filter(d => d.Arquer === arq);
-        if(dist !== 'TOTES') fil = fil.filter(d => d.Distancia == dist || d['Distància'] == dist);
-        if(ev !== 'TOTS') fil = fil.filter(d => (d.Esdeveniment || d.esdeveniment) == ev);
+        let fil = dadesGlobals.filter(d => (d.Arquer || d.arquer) === arq);
+        
+        if(dist !== 'TOTES') {
+            fil = fil.filter(d => {
+                const dDist = d.Distancia || d['Distància'] || d.distancia;
+                return dDist == dist;
+            });
+        }
+        
+        if(ev !== 'TOTS') {
+            fil = fil.filter(d => {
+                const dEv = d.Esdeveniment || d.esdeveniment;
+                return dEv == ev;
+            });
+        }
         
         let flx = [];
         fil.forEach(d => {
