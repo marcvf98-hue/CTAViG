@@ -11,16 +11,13 @@
         :root { --groc: #FFEB3B; --vermell: #f44336; --blau: #2196F3; --negre: #424242; --blanc: #FFFFFF; --primary: #1e272e; --bg: #f5f6fa; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); overscroll-behavior-y: contain; padding-bottom: 90px; }
         
-        .club-header { background: var(--primary); color: white; padding: 10px 15px; display: flex; flex-direction: column; justify-content: center; position: fixed; top: 0; width: 100%; z-index: 101; box-sizing: border-box; height: 115px; }
-        .header-top { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 40px; }
-        .header-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 5px; }
-        .header-filters select { margin-bottom: 0; padding: 6px; font-size: 0.85rem; background: #2c3a47; color: white; border: 1px solid #485460; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .club-header { background: var(--primary); color: white; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; width: 100%; z-index: 101; box-sizing: border-box; height: 70px; }
         
         .navbar { background: var(--primary); color: white; padding: 10px; display: flex; justify-content: space-around; position: fixed; bottom: 0; width: 100%; z-index: 100; font-size: 0.8rem; }
         .nav-btn { text-align: center; color: white; text-decoration: none; opacity: 0.5; cursor: pointer; width: 20%; display: flex; flex-direction: column; align-items: center; }
         .nav-btn.active { opacity: 1; font-weight: bold; color: var(--groc); }
         
-        .container { padding: 130px 15px 20px 15px; max-width: 500px; margin: auto; }
+        .container { padding: 85px 15px 20px 15px; max-width: 500px; margin: auto; }
         .page { display: none; } .page.active { display: block; }
         
         input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
@@ -64,23 +61,10 @@
 </head>
 <body>
     <div class="club-header">
-        <div class="header-top">
-            <div style="font-weight:bold; font-size:1.2rem; display:flex; align-items:center;">
-                <img src="Logo_CTAViG.png" height="35" style="margin-right:10px;" alt="Logo" onerror="this.style.display='none'"> Arquers ViG
-            </div>
-            <div id="txtPropietari" style="font-size:0.7rem; opacity:0.8; text-align:right;"></div>
+        <div style="font-weight:bold; font-size:1.2rem; display:flex; align-items:center;">
+            <img src="Logo_CTAViG.png" height="40" style="margin-right:10px;" alt="Logo" onerror="this.style.display='none'"> Arquers ViG
         </div>
-        <div class="header-filters">
-            <select id="selDistanciaStats" onchange="carregarEstadistiques(); renderRankingClub();">
-                <option value="TOTES">Totes Dists.</option>
-                <option value="70">70m</option><option value="60">60m</option><option value="50">50m</option>
-                <option value="40">40m</option><option value="30">30m</option><option value="22">22m</option>
-                <option value="18">18m</option><option value="10">10m</option><option value="5">5m</option>
-            </select>
-            <select id="selEsdevenimentStats" onchange="carregarEstadistiques(); renderRankingClub();">
-                <option value="TOTS">Històric Global</option>
-            </select>
-        </div>
+        <div id="txtPropietari" style="font-size:0.7rem; opacity:0.8; text-align:right;"></div>
     </div>
 
     <div class="container">
@@ -124,7 +108,7 @@
                 <button class="btn-danger" style="margin-bottom:0;" onclick="esborrarHistoricLocal()">Esborrar Memòria Local</button>
             </div>
             <div style="text-align: center; font-size: 0.7rem; color: #a4b0be; margin-top: 25px; font-family: monospace;">
-                Versió: 2026.06.20 (Filtres Globals + Fusió de Noms)
+                Versió: 2026.06.20 (Filtres Locals Corregits)
             </div>
         </div>
 
@@ -157,6 +141,17 @@
         <div id="page-stats" class="page">
             <h2>📊 Rendiment Personal</h2>
             <select id="selArquerStats" onchange="carregarEstadistiques()"></select>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <select id="selDistanciaStats" onchange="carregarEstadistiques();">
+                    <option value="TOTES">Totes Dists.</option>
+                    <option value="70">70m</option><option value="60">60m</option><option value="50">50m</option>
+                    <option value="40">40m</option><option value="30">30m</option><option value="22">22m</option>
+                    <option value="18">18m</option><option value="10">10m</option><option value="5">5m</option>
+                </select>
+                <select id="selEsdevenimentStats" onchange="carregarEstadistiques();">
+                    <option value="TOTS">Històric Global</option>
+                </select>
+            </div>
             
             <div class="info-tanda">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de fletxes (Q10 - Q50 - Q90)</div>
@@ -171,7 +166,7 @@
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:20px;">
                     <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MÍNIM</small><div id="valMin" style="font-size:1.4rem; font-weight:bold; color:var(--vermell)">-</div></div>
-                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MITJANA</small><div id="valMin" style="font-size:1.4rem; font-weight:bold;">-</div></div>
+                    <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MITJANA</small><div id="valMitjana" style="font-size:1.4rem; font-weight:bold;">-</div></div>
                     <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">MÀXIM</small><div id="valMax" style="font-size:1.4rem; font-weight:bold; color:var(--blau)">-</div></div>
                     
                     <div style="background:#f5f6fa; padding:10px; border-radius:8px;"><small style="color:#7f8c8d; font-size:0.7rem;">Q10</small><div id="valQ10" style="font-size:1.2rem; font-weight:bold;">-</div></div>
@@ -183,6 +178,17 @@
 
         <div id="page-ranking" class="page">
             <h2 style="margin-bottom: 5px;">🏆 Rànquing del Club</h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                <select id="selDistanciaRanking" onchange="renderRankingClub();">
+                    <option value="TOTES">Totes Dists.</option>
+                    <option value="70">70m</option><option value="60">60m</option><option value="50">50m</option>
+                    <option value="40">40m</option><option value="30">30m</option><option value="22">22m</option>
+                    <option value="18">18m</option><option value="10">10m</option><option value="5">5m</option>
+                </select>
+                <select id="selEsdevenimentRanking" onchange="renderRankingClub();">
+                    <option value="TOTS">Històric Global</option>
+                </select>
+            </div>
             
             <div style="display:flex; gap:10px; margin-bottom: 12px;">
                 <button id="btnRankingBrut" onclick="canviarTipusRanking('brut')" style="background:var(--primary); color:var(--groc); font-weight:bold; border:2px solid var(--primary); flex:1; padding:10px; border-radius:8px;">🏆 BRUT</button>
@@ -389,11 +395,11 @@
             return;
         }
 
-        const dist = document.getElementById('selDistanciaStats').value;
-        const ev = document.getElementById('selEsdevenimentStats').value;
+        const dist = document.getElementById('selDistanciaRanking').value;
+        const ev = document.getElementById('selEsdevenimentRanking').value;
         
         let dadesFiltrades = dadesGlobals.filter(d => !d.isLocal);
-        if(dist !== 'TOTES') dadesFiltrades = dadesFiltrades.filter(d => d.Distancia == dist || d['Distància'] == dist);
+        if(dist !== 'TOTES') dadesFiltrades = dadesFiltrades.filter(d => (d.Distancia || d['Distància'] || d.distancia) == dist);
         if(ev !== 'TOTS') dadesFiltrades = dadesFiltrades.filter(d => (d.Esdeveniment || d.esdeveniment) == ev);
 
         if(dadesFiltrades.length === 0) {
@@ -586,7 +592,11 @@
             document.getElementById('selArquerStats').innerHTML = noms.map(n => `<option value="${n}">${n}</option>`).join('');
             
             const evs = [...new Set(dadesGlobals.map(d => d.Esdeveniment || d.esdeveniment))].filter(e => e);
-            document.getElementById('selEsdevenimentStats').innerHTML = `<option value="TOTS">Històric Global</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
+            
+            // Omplim els selectors de les dues pestanyes
+            const desplegableHTML = `<option value="TOTS">Històric Global</option>` + evs.map(e => `<option value="${e}">${e}</option>`).join('');
+            document.getElementById('selEsdevenimentStats').innerHTML = desplegableHTML;
+            document.getElementById('selEsdevenimentRanking').innerHTML = desplegableHTML;
             
             const prop = localStorage.getItem('vig_propietari');
             if(prop) {
