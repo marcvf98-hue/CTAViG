@@ -104,11 +104,13 @@
             <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #fab1a0;">
                 <h3 style="color:#e17055; margin-top:0; font-size:1rem;">📱 Històric Privat Local</h3>
                 <p style="font-size:0.75rem; color:#636e72;">Dades guardades en aquest dispositiu.</p>
+                <div id="txtPendents" style="font-size:0.75rem; color:#636e72; background:#f5f6fa; border-radius:6px; padding:8px; margin-bottom:10px;"></div>
+                <button class="btn-action" style="background:#74b9ff; margin-bottom:10px;" onclick="reintentarEnviaments()">🔄 Reintentar enviaments pendents</button>
                 <button class="btn-action" style="background:#fab1a0; color:#d63031; margin-bottom:10px;" onclick="exportarHistoricLocal()">Descarregar Còpia (CSV)</button>
                 <button class="btn-danger" style="margin-bottom:0;" onclick="esborrarHistoricLocal()">Esborrar Memòria Local</button>
             </div>
             <div style="text-align: center; font-size: 0.7rem; color: #a4b0be; margin-top: 25px; font-family: monospace;">
-                Versió: 2026.06.20 (Filtres Locals Corregits)
+                Versió: 2026.07.05 (Sync fiable + resum d'entrada)
             </div>
         </div>
 
@@ -200,7 +202,7 @@
         </div>
     </div>
 
-    <div id="modalCanviArquer"><div class="modal-content"><h2 style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2><p>Tanda de <b><span id="modCanviArquerPrev"></span></b>:</p><table class="official-table" style="margin-bottom:20px;"><thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead><tbody id="modCanviArquerTaula"></tbody></table><div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;"><h3>Pròxim torn:</h3><h2 id="modCanviArquerNext"></h2></div><button onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width:100%; padding:15px; border-radius:10px;">👉 CONTINUAR</button></div></div>
+    <div id="modalCanviArquer"><div class="modal-content"><h2 id="modCanviTitol" style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2><p>Tanda de <b><span id="modCanviArquerPrev"></span></b>:</p><table class="official-table" style="margin-bottom:20px;"><thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead><tbody id="modCanviArquerTaula"></tbody></table><div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;"><h3 style="margin:0 0 5px 0;">Pròxim torn:</h3><h2 id="modCanviArquerNext" style="margin:0;"></h2></div><button id="btnModalContinuar" onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width:100%; padding:15px; border-radius:10px;">👉 CONTINUAR</button><button onclick="corregirTanda()" style="background:#fab1a0; color:#c0392b; border:none; width:100%; padding:12px; border-radius:10px; font-weight:bold; margin-top:5px; margin-bottom:0;">↶ CORREGIR ÚLTIMA FLETXA</button></div></div>
     <div id="modalEdicio"><div class="modal-content"><h3 id="modArquerNom"></h3><p>Edita Entrada <span id="modTandaNum"></span></p><div id="modFletxes" style="display:flex; justify-content:center; gap:5px; margin-bottom:20px;"></div><div style="display:flex; gap:10px;"><button onclick="tancarEdicio()" style="background:#7f8c8d; color:white; border-radius:8px;">Cancel·lar</button><button onclick="guardarEdicio()" style="background:#27ae60; color:white; border-radius:8px;">Guardar</button></div></div></div>
 
     <div class="navbar">
@@ -215,10 +217,27 @@
     let config = {}; let arquers = []; let arquerActiu = 0; let dadesGlobals = []; let editIdx = { arq: -1, tanda: -1 };
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbz6K6Xp-LPzjkBsf-K2HxW4Dp3BRNzpwRq6yu1cRLzOoqE_3X_5_nP6mvIWlIOTjatD/exec";
 
-    window.onload = function() {
+    // ---------- Utilitats de noms i identificadors ----------
+    const normalitzarText = (t) => t ? t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+
+    // Coincidència segura: igualtat exacta, o un nom és prefix de l'altre COM A PARAULA sencera
+    // ("jordi" ~ "jordi puig" ✔ | "marc" ~ "joan marc" ✘ | "marc" ~ "marcel" ✘)
+    function nomsCoincideixen(a, b) {
+        const nA = normalitzarText(a), nB = normalitzarText(b);
+        if (!nA || !nB) return false;
+        return nA === nB || nA.startsWith(nB + " ") || nB.startsWith(nA + " ");
+    }
+
+    const generarIdSessio = () => (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : Date.now() + '-' + Math.random().toString(16).slice(2);
+
+    window.onload = async function() {
         afegirSlotArquer(); 
         const prop = localStorage.getItem('vig_propietari');
         if(prop) { document.querySelector('.inpNomArquer').value = prop; document.getElementById('txtPropietari').innerText = "Mòbil de " + prop; }
+        actualitzarComptadorPendents();
+        await processarCua();   // intenta enviar sessions pendents d'altres dies (sense cobertura al camp)
         fetchDades();
     };
 
@@ -286,19 +305,29 @@
         if(arq.tandaActual.length < max) arq.tandaActual.push(v);
         actualitzarMarcador();
         if(arq.tandaActual.length === max) {
+            // Sempre mostrem el resum de la tanda (també amb 1 sol arquer o quan és l'últim):
+            // així es veu el còmput total abans de tancar l'entrada.
             let seguent = (arquerActiu + 1) % arquers.length;
-            if (arquers.length === 1) tancarEntradaActual();
-            else mostrarCanviArquer(arquerActiu, seguent);
+            mostrarCanviArquer(arquerActiu, seguent);
         }
     }
 
     function mostrarCanviArquer(prevIdx, nextIdx) {
         let arqPrev = arquers[prevIdx];
+        const esFiEntrada = (nextIdx === 0);
+        document.getElementById('modCanviTitol').innerText = esFiEntrada ? "✅ Fi de l'entrada" : "🔄 Canvi de Torn";
         document.getElementById('modCanviArquerPrev').innerText = arqPrev.nom;
-        document.getElementById('modCanviArquerNext').innerText = (nextIdx === 0) ? "FI ENTRADA" : arquers[nextIdx].nom;
+        document.getElementById('modCanviArquerNext').innerText = esFiEntrada ? "Fi de l'entrada per a tots" : arquers[nextIdx].nom;
+        document.getElementById('btnModalContinuar').innerText = esFiEntrada ? "✅ TANCAR ENTRADA" : "👉 CONTINUAR";
         let sorted = [...arqPrev.tandaActual].sort((a,b) => sortFletxes(b, a));
         document.getElementById('modCanviArquerTaula').innerHTML = `<tr><td>${sorted.slice(0,3).join(' ')}</td><td class="col-sum">${calcularPunts(sorted.slice(0,3))}</td><td>${sorted.slice(3,6).join(' ') || '-'}</td><td class="col-sum">${sorted.length>3 ? calcularPunts(sorted.slice(3,6)) : '-'}</td><td class="col-total">${calcularPunts(sorted)}</td></tr>`;
         document.getElementById('modalCanviArquer').style.display = 'flex';
+    }
+
+    // Tanca el modal SENSE avançar el torn: permet desfer l'última fletxa si era errònia.
+    function corregirTanda() {
+        document.getElementById('modalCanviArquer').style.display = 'none';
+        desferUltima();
     }
 
     function tancarCanviArquer() {
@@ -307,11 +336,10 @@
         if(seguent === 0) tancarEntradaActual(); else { arquerActiu = seguent; renderTabs(); actualitzarMarcador(); }
     }
 
+    // El modal de resum ja fa de confirmació: aquí tanquem directament, sense confirm().
     function tancarEntradaActual() {
-        if(confirm("Tancar entrada per a tots?")) {
-            arquers.forEach(a => { a.tandes.push([...a.tandaActual]); a.tandaActual = []; });
-            arquerActiu = 0; renderTabs(); actualitzarMarcador();
-        }
+        arquers.forEach(a => { a.tandes.push([...a.tandaActual]); a.tandaActual = []; });
+        arquerActiu = 0; renderTabs(); actualitzarMarcador();
     }
 
     function actualitzarMarcador() {
@@ -560,31 +588,32 @@
             const localNormalitzat = histLocal.map(l => ({
                 Arquer: l.arquer, Esdeveniment: l.esdeveniment, Arc: l.arc, Categoria: l.categoria,
                 Distancia: l.distancia, Diana: l.diana, Punts: l.punts, Deus: l.deus, Ics: l.ics,
-                'Detall Tandes': l.detall_tandes, Data: l.data, isLocal: true
+                'Detall Tandes': l.detall_tandes, Data: l.data, ID_Sessio: l.id_sessio, isLocal: true
             }));
 
-            const normalitzarText = (t) => t ? t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
-
+            // Canonitzar el nom local amb el del servidor (coincidència segura, no "includes")
             localNormalitzat.forEach(l => {
-                const matchServidor = dadesServidor.find(s => {
-                    const nS = normalitzarText(s.Arquer || s.arquer);
-                    const nL = normalitzarText(l.Arquer);
-                    return nS === nL || nS.includes(nL) || nL.includes(nS);
-                });
+                const matchServidor = dadesServidor.find(s => nomsCoincideixen(s.Arquer || s.arquer, l.Arquer));
                 if (matchServidor) {
                     l.Arquer = matchServidor.Arquer || matchServidor.arquer;
                 }
             });
 
-            const localSenseDuplicats = localNormalitzat.filter(l => 
-                !dadesServidor.some(s => {
-                    const nomS = normalitzarText(s.Arquer || s.arquer);
-                    const nomL = normalitzarText(l.Arquer);
+            // Deduplicació:
+            // 1) Per ID de sessió (fiable, per a registres nous que ja porten id_sessio)
+            // 2) Fallback per a registres antics sense ID: nom + detall exacte
+            const idsServidor = new Set(
+                dadesServidor.map(s => s.ID_Sessio || s.id_sessio).filter(Boolean)
+            );
+
+            const localSenseDuplicats = localNormalitzat.filter(l => {
+                if (l.ID_Sessio && idsServidor.has(l.ID_Sessio)) return false;
+                return !dadesServidor.some(s => {
                     const detallS = (s['Detall Tandes'] || s['detall_tandes'] || "").trim();
                     const detallL = (l['Detall Tandes'] || "").trim();
-                    return nomS === nomL && detallS === detallL;
-                })
-            );
+                    return nomsCoincideixen(s.Arquer || s.arquer, l.Arquer) && detallS !== "" && detallS === detallL;
+                });
+            });
 
             dadesGlobals = [...dadesServidor, ...localSenseDuplicats];
 
@@ -599,7 +628,7 @@
             
             const prop = localStorage.getItem('vig_propietari');
             if(prop) {
-                const nomCoincident = noms.find(n => normalitzarText(n) === normalitzarText(prop) || normalitzarText(n).includes(normalitzarText(prop)) || normalitzarText(prop).includes(normalitzarText(n)));
+                const nomCoincident = noms.find(n => nomsCoincideixen(n, prop));
                 if(nomCoincident) {
                     document.getElementById('selArquerStats').value = nomCoincident;
                     localStorage.setItem('vig_propietari', nomCoincident);
@@ -675,40 +704,112 @@
     function tancarEdicio() { document.getElementById('modalEdicio').style.display = 'none'; }
     function guardarEdicio() { arquers[editIdx.arq].tandes[editIdx.tanda] = arquers[editIdx.arq].tandes[editIdx.tanda].map((_, i) => { let v = document.getElementById('modF'+i).value; return (v === 'X' || v === 'M') ? v : parseInt(v); }); tancarEdicio(); renderRegistreSessio(); }
 
+    // ---------- Cua d'enviaments pendents (funciona sense cobertura al camp) ----------
+    function afegirACua(dades) {
+        let cua = JSON.parse(localStorage.getItem('vig_pendents_enviar') || "[]");
+        cua.push(dades);
+        localStorage.setItem('vig_pendents_enviar', JSON.stringify(cua));
+    }
+
+    function comptarPendents() {
+        return JSON.parse(localStorage.getItem('vig_pendents_enviar') || "[]").length;
+    }
+
+    function marcarSincronitzat(idSessio) {
+        let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
+        let canvi = false;
+        hist.forEach(h => { if(h.id_sessio === idSessio) { h.sincronitzat = true; canvi = true; } });
+        if(canvi) localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
+    }
+
+    async function processarCua() {
+        let cua = JSON.parse(localStorage.getItem('vig_pendents_enviar') || "[]");
+        if(cua.length === 0) { actualitzarComptadorPendents(); return; }
+        const restants = [];
+        for (const dades of cua) {
+            try {
+                // Nota: amb mode 'no-cors' el fetch només falla per error de XARXA (offline),
+                // que és exactament el cas que volem detectar per reintentar més tard.
+                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dades) });
+                await new Promise(resolve => setTimeout(resolve, 500));
+                marcarSincronitzat(dades.id_sessio);
+            } catch(error) {
+                console.warn("Sense connexió, es reintentarà més tard:", dades.arquer, error);
+                restants.push(dades);
+            }
+        }
+        localStorage.setItem('vig_pendents_enviar', JSON.stringify(restants));
+        actualitzarComptadorPendents();
+    }
+
+    async function reintentarEnviaments() {
+        await processarCua();
+        const n = comptarPendents();
+        alert(n > 0 ? `Encara queden ${n} sessió(ns) pendents. Torna-ho a provar amb connexió.` : "Tot enviat al club! ✅");
+        if(n === 0) fetchDades();
+    }
+
+    function actualitzarComptadorPendents() {
+        const n = comptarPendents();
+        const el = document.getElementById('txtPendents');
+        if(el) el.innerHTML = n > 0
+            ? `⚠️ <b>${n}</b> sessió(ns) pendent(s) d'enviar al club. S'enviaran automàticament quan obris l'app amb connexió.`
+            : "✅ Cap enviament pendent.";
+    }
+
     async function enviarAlClub() {
         const prop = localStorage.getItem('vig_propietari');
+        const consent = document.getElementById('chkConsent').checked;
         const btn = document.getElementById('btnEnviarClub');
-        btn.innerText = "⏳ Enviant dades... (No tanquis)";
+        btn.innerText = "⏳ Guardant... (No tanquis)";
         btn.disabled = true;
 
         for (const arq of arquers) {
             let total = 0, deus = 0, ics = 0;
             arq.tandes.flat().forEach(f => { if(f==='X'){ total+=10; ics++; deus++; } else if(f==10){ total+=10; deus++; } else if(f!=='M') total+=parseInt(f); });
-            const dades = { esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria, distancia: config.dist, diana: config.diana, punts: total, deus, ics, detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ') };
+            const dades = {
+                id_sessio: generarIdSessio(),
+                data: new Date().toISOString(),
+                esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria,
+                distancia: config.dist, diana: config.diana, punts: total, deus, ics,
+                detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ')
+            };
             
-            if(arq.nom === prop) {
+            // Còpia privada del propietari: comparació normalitzada (accents, majúscules, nom vs nom+cognom)
+            if(prop && nomsCoincideixen(arq.nom, prop)) {
                 let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
-                hist.push({...dades, data: new Date().toISOString()});
+                hist.push({...dades, sincronitzat: false});
                 localStorage.setItem('vig_historic_privat', JSON.stringify(hist));
             }
 
-            if(document.getElementById('chkConsent').checked) {
-                try {
-                    await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...dades, consentiment: "Sí"}) });
-                    await new Promise(resolve => setTimeout(resolve, 500)); 
-                } catch(error) { console.error("Error enviant dades de", arq.nom, error); }
+            // En lloc d'enviar directament, encuem: si no hi ha cobertura NO es perd res.
+            if(consent) {
+                afegirACua({...dades, consentiment: "Sí"});
             }
         }
 
-        alert("Sessió guardada correctament!"); 
+        if(consent) {
+            btn.innerText = "⏳ Enviant al club...";
+            await processarCua();
+            const pendents = comptarPendents();
+            if(pendents > 0) {
+                alert("Sessió guardada al mòbil ✅\nPerò no s'ha pogut enviar al club (sense cobertura?).\nS'enviarà automàticament la pròxima vegada que obris l'app amb connexió.");
+            } else {
+                alert("Sessió guardada i enviada al club correctament! ✅");
+            }
+        } else {
+            alert("Sessió guardada al mòbil (no s'ha enviat al rànquing del club).");
+        }
+
+        arquers = [];   // evita el diàleg de "sortir sense guardar" en recarregar
         location.reload();
     }
 
     function exportarHistoricLocal() {
         let hist = JSON.parse(localStorage.getItem('vig_historic_privat') || "[]");
         if(hist.length === 0) return alert("No hi ha dades guardades en aquest dispositiu.");
-        let csv = "Data,Esdeveniment,Arc,Categoria,Distancia,Diana,Punts,Deus,Ics,Detall\n" + 
-                  hist.map(h => `"${h.data}","${h.esdeveniment}","${h.arc}","${h.categoria}","${h.distancia}","${h.diana}",${h.punts},${h.deus},${h.ics},"${h.detall_tandes}"`).join('\n');
+        let csv = "Data,Esdeveniment,Arc,Categoria,Distancia,Diana,Punts,Deus,Ics,Detall,ID_Sessio,Sincronitzat\n" + 
+                  hist.map(h => `"${h.data}","${h.esdeveniment}","${h.arc}","${h.categoria}","${h.distancia}","${h.diana}",${h.punts},${h.deus},${h.ics},"${h.detall_tandes}","${h.id_sessio || ''}","${h.sincronitzat ? 'Sí' : 'No'}"`).join('\n');
         let blob = new Blob([csv], {type: 'text/csv'});
         let url = URL.createObjectURL(blob);
         let a = document.createElement('a'); a.href = url; a.download = 'historic_privat_arquers_vig.csv'; a.click();
@@ -717,6 +818,8 @@
     function esborrarHistoricLocal() { 
         if(confirm("Segur que vols esborrar l'històric privat guardat en aquest dispositiu?")) {
             localStorage.removeItem('vig_historic_privat');
+            localStorage.removeItem('vig_pendents_enviar');
+            actualitzarComptadorPendents();
             alert("Memòria local esborrada.");
         }
     }
