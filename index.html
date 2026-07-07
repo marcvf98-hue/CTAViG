@@ -22,6 +22,7 @@
         
         input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
         .btn-action { background: #0fb9b1; color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-add { background: #3498db; color: white; font-weight: bold; border: none; cursor: pointer; margin-bottom: 20px; }
         .btn-danger { background: #ff7675; color: white; border: none; font-weight: bold; cursor: pointer; }
         
@@ -92,6 +93,12 @@
                     </select>
                 </div>
             </div>
+            <label style="font-size:0.8rem; font-weight:bold; color:#555;">Ronda:</label>
+            <select id="cfgRonda" onchange="canviRonda()">
+                <option value="720" selected>WA 720 — 12 entrades × 6 fletxes</option>
+                <option value="360">Mitja ronda 360 — 12 entrades × 3 fletxes</option>
+                <option value="LLIURE">Lliure / Entrenament</option>
+            </select>
             <label style="font-size:0.8rem; font-weight:bold; color:#555;">Tanda:</label>
             <select id="cfgFletxesMax"><option value="3">3 fletxes / entrada</option><option value="6">6 fletxes / entrada</option></select>
 
@@ -110,7 +117,7 @@
                 <button class="btn-danger" style="margin-bottom:0;" onclick="esborrarHistoricLocal()">Esborrar Memòria Local</button>
             </div>
             <div style="text-align: center; font-size: 0.7rem; color: #a4b0be; margin-top: 25px; font-family: monospace;">
-                Versió: 2026.07.05 (Sync fiable + resum d'entrada)
+                Versió: 2026.07.07b (Ronda 720 · Desempats · Confirmació · Evolució i PB)
             </div>
         </div>
 
@@ -137,7 +144,7 @@
                 <input type="checkbox" id="chkConsent" style="width:auto; margin-bottom:0; margin-right:10px; transform:scale(1.3);">
                 <label for="chkConsent" style="font-size:0.85rem; font-weight:bold;">Enviar dades al Rànquing del Club.</label>
             </div>
-            <button id="btnEnviarClub" class="btn-action" style="background:#2ecc71; padding:18px; font-size:1.1rem; border-radius:12px;" onclick="enviarAlClub()">📤 FINALITZAR I GUARDAR</button>
+            <button id="btnEnviarClub" class="btn-action" style="background:#2ecc71; padding:18px; font-size:1.1rem; border-radius:12px;" onclick="obrirConfirmacioEnviament()">📤 FINALITZAR I GUARDAR</button>
         </div>
 
         <div id="page-stats" class="page">
@@ -155,6 +162,13 @@
                 </select>
             </div>
             
+            <div id="cardPB" class="info-tanda" style="display:none; border-left:4px solid var(--groc);"></div>
+
+            <div class="info-tanda">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">📈 Evolució (mitjana de punts per fletxa i sessió)</div>
+                <div id="graficaEvolucio"><div style="color:#aaa; font-size:0.8rem; padding:15px 0;">-</div></div>
+            </div>
+
             <div class="info-tanda">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">Dispersió de fletxes ($Q_{10}$ - $Q_{50}$ - $Q_{90}$)</div>
                 <div class="dispersion-bar">
@@ -205,6 +219,17 @@
     <div id="modalCanviArquer"><div class="modal-content"><h2 id="modCanviTitol" style="color:var(--primary); margin-top:0;">🔄 Canvi de Torn</h2><p>Tanda de <b><span id="modCanviArquerPrev"></span></b>:</p><table class="official-table" style="margin-bottom:20px;"><thead><tr><th>1-3</th><th class="col-sum">S1</th><th>4-6</th><th class="col-sum">S2</th><th class="col-total">TOTAL</th></tr></thead><tbody id="modCanviArquerTaula"></tbody></table><div style="background:#f1f2f6; padding:15px; border-radius:8px; margin-bottom:20px;"><h3 style="margin:0 0 5px 0;">Pròxim torn:</h3><h2 id="modCanviArquerNext" style="margin:0;"></h2></div><button id="btnModalContinuar" onclick="tancarCanviArquer()" class="btn-action" style="background:var(--blau); width:100%; padding:15px; border-radius:10px;">👉 CONTINUAR</button><button onclick="corregirTanda()" style="background:#fab1a0; color:#c0392b; border:none; width:100%; padding:12px; border-radius:10px; font-weight:bold; margin-top:5px; margin-bottom:0;">↶ CORREGIR ÚLTIMA FLETXA</button></div></div>
     <div id="modalEdicio"><div class="modal-content"><h3 id="modArquerNom"></h3><p>Edita Entrada <span id="modTandaNum"></span></p><div id="modFletxes" style="display:flex; justify-content:center; gap:5px; margin-bottom:20px;"></div><div style="display:flex; gap:10px;"><button onclick="tancarEdicio()" style="background:#7f8c8d; color:white; border-radius:8px;">Cancel·lar</button><button onclick="guardarEdicio()" style="background:#27ae60; color:white; border-radius:8px;">Guardar</button></div></div></div>
 
+    <div id="modalConfirmacio" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1005; align-items:center; justify-content:center;">
+        <div class="modal-content" style="max-height:85vh; overflow-y:auto;">
+            <h2 style="color:var(--primary); margin-top:0;">✍️ Confirmació de targes</h2>
+            <p style="font-size:0.8rem; color:#555;">Com a la tarja de paper: cada arquer revisa la seva puntuació i confirma que hi està d'acord abans d'enviar.</p>
+            <div id="confAvisos"></div>
+            <div id="confLlista"></div>
+            <button id="btnConfirmarEnviar" class="btn-action" style="background:#2ecc71; padding:15px; border-radius:10px;" disabled onclick="confirmarIEnviar()">📤 ENVIAR</button>
+            <button onclick="document.getElementById('modalConfirmacio').style.display='none'" style="background:#7f8c8d; color:white; border-radius:8px; margin-bottom:0;">Cancel·lar</button>
+        </div>
+    </div>
+
     <div class="navbar">
         <div class="nav-btn active" id="btn-config" onclick="showPage('config')">⚙️<br>Conf</div>
         <div class="nav-btn" id="btn-anotar" onclick="showPage('anotar')">🎯<br>Anotar</div>
@@ -215,7 +240,7 @@
 
 <script>
     let config = {}; let arquers = []; let arquerActiu = 0; let dadesGlobals = []; let editIdx = { arq: -1, tanda: -1 };
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxYIZGtOz-IXhNkhmjqgUeupERXX3ZP0QGxCE-DhppsecbHU6o9y6ozupsj5l00mg6u/exec";
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbz6K6Xp-LPzjkBsf-K2HxW4Dp3BRNzpwRq6yu1cRLzOoqE_3X_5_nP6mvIWlIOTjatD/exec";
 
     // ---------- Utilitats de noms i identificadors ----------
     const normalitzarText = (t) => t ? t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
@@ -234,6 +259,7 @@
 
     window.onload = async function() {
         afegirSlotArquer(); 
+        canviRonda();
         const prop = localStorage.getItem('vig_propietari');
         if(prop) { document.querySelector('.inpNomArquer').value = prop; document.getElementById('txtPropietari').innerText = "Mòbil de " + prop; }
         actualitzarComptadorPendents();
@@ -283,8 +309,19 @@
         document.getElementById('llistaArquersConfig').appendChild(div);
     }
 
+    // La ronda fixa el nombre de fletxes per entrada (WA 720: 6 fletxes, 360: 3 fletxes)
+    function canviRonda() {
+        const r = document.getElementById('cfgRonda').value;
+        const sel = document.getElementById('cfgFletxesMax');
+        if(r === '720') { sel.value = '6'; sel.disabled = true; }
+        else if(r === '360') { sel.value = '3'; sel.disabled = true; }
+        else { sel.disabled = false; }
+    }
+
     function guardarConfig() {
         config = { event: document.getElementById('cfgEvent').value, dist: document.getElementById('cfgDistancia').value, diana: document.getElementById('cfgDiana').value, limit: document.getElementById('cfgFletxesMax').value };
+        config.ronda = document.getElementById('cfgRonda').value;
+        config.entradesMax = (config.ronda === 'LLIURE') ? null : 12;
         arquers = [];
         document.querySelectorAll('.arquer-config-box').forEach((box, i) => {
             let nom = box.querySelector('.inpNomArquer').value.trim();
@@ -302,6 +339,10 @@
 
     function addFletxa(v) {
         let arq = arquers[arquerActiu]; let max = parseInt(config.limit);
+        if(config.entradesMax && arq.tandes.length >= config.entradesMax) {
+            alert("🏁 Ronda completa: ja s'han anotat les " + config.entradesMax + " entrades de " + arq.nom + ".");
+            return;
+        }
         if(arq.tandaActual.length < max) arq.tandaActual.push(v);
         actualitzarMarcador();
         if(arq.tandaActual.length === max) {
@@ -340,11 +381,20 @@
     function tancarEntradaActual() {
         arquers.forEach(a => { a.tandes.push([...a.tandaActual]); a.tandaActual = []; });
         arquerActiu = 0; renderTabs(); actualitzarMarcador();
+        if(config.entradesMax && arquers[0].tandes.length >= config.entradesMax) {
+            alert("🏁 Ronda " + config.ronda + " completa!\nRevisa el registre i envia les dades al club.");
+            showPage('registre');
+        }
     }
 
     function actualitzarMarcador() {
         let arq = arquers[arquerActiu];
-        document.getElementById('txtTandaActual').innerText = arq.nom + " - E" + (arq.tandes.length + 1);
+        if(config.entradesMax && arq.tandes.length >= config.entradesMax) {
+            document.getElementById('txtTandaActual').innerText = arq.nom + " - 🏁 Ronda completa";
+        } else {
+            const totalE = config.entradesMax ? "/" + config.entradesMax : "";
+            document.getElementById('txtTandaActual').innerText = arq.nom + " - E" + (arq.tandes.length + 1) + totalE;
+        }
         let visuals = [...arq.tandaActual].sort((a,b) => sortFletxes(b, a));
         document.getElementById('txtFletxesActuals').innerHTML = `${visuals.slice(0,3).join(' ')} ${visuals.length>=3?'|':''} ${visuals.slice(3,6).join(' ')}`;
         document.getElementById('txtPuntsActuals').innerText = calcularPunts(arq.tandaActual);
@@ -438,10 +488,12 @@
         let r = {};
         dadesFiltrades.forEach(d => {
             let nom = d.Arquer; if(!nom) return;
-            if(!r[nom]) r[nom] = { puntsBruts: 0, indexPond: 0, fletxes: 0, sessions: 0, recordBrut: 0, recordIndex: 0 };
+            if(!r[nom]) r[nom] = { puntsBruts: 0, indexPond: 0, fletxes: 0, sessions: 0, recordBrut: 0, recordIndex: 0, recordDeus: 0, recordIcs: 0 };
             
             let puntsSessio = 0;
             let fletxesSessio = 0;
+            let deusSessio = 0;
+            let icsSessio = 0;
             let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
             let regex = /\[(.*?)\]/g; let m;
             while ((m = regex.exec(detall)) !== null) {
@@ -453,6 +505,8 @@
                         puntsSessio += val;
                         r[nom].fletxes++; 
                         fletxesSessio++;
+                        if(v === 'X') { icsSessio++; deusSessio++; }
+                        else if(val === 10) { deusSessio++; }
                     }
                 });
             }
@@ -465,19 +519,29 @@
             r[nom].indexPond += sessioIndex;
             r[nom].sessions++;
             
-            if(puntsSessio > r[nom].recordBrut) r[nom].recordBrut = puntsSessio;
+            // Rècord amb desempat World Archery: punts > nombre de 10s > nombre de Xs
+            const esNouRecord = puntsSessio > r[nom].recordBrut ||
+                (puntsSessio === r[nom].recordBrut && puntsSessio > 0 &&
+                 (deusSessio > r[nom].recordDeus ||
+                  (deusSessio === r[nom].recordDeus && icsSessio > r[nom].recordIcs)));
+            if(esNouRecord) {
+                r[nom].recordBrut = puntsSessio;
+                r[nom].recordDeus = deusSessio;
+                r[nom].recordIcs = icsSessio;
+            }
             if(sessioIndex > r[nom].recordIndex) r[nom].recordIndex = sessioIndex;
         });
 
         let llista = Object.keys(r).map(nom => {
             if (tipusRankingActual === 'brut') {
-                return { nom, record: r[nom].recordBrut, mitjana: r[nom].fletxes > 0 ? (r[nom].puntsBruts / r[nom].fletxes).toFixed(2) : "0.00", tirades: r[nom].sessions };
+                return { nom, record: r[nom].recordBrut, deus: r[nom].recordDeus, ics: r[nom].recordIcs, mitjana: r[nom].fletxes > 0 ? (r[nom].puntsBruts / r[nom].fletxes).toFixed(2) : "0.00", tirades: r[nom].sessions };
             } else {
                 return { nom, record: r[nom].recordIndex.toFixed(1), mitjana: r[nom].sessions > 0 ? (r[nom].indexPond / r[nom].sessions).toFixed(1) : "0.0", tirades: r[nom].sessions };
             }
         });
         
-        llista.sort((a,b) => parseFloat(b.record) - parseFloat(a.record));
+        // Ordenació amb desempat oficial: punts, després 10s, després Xs
+        llista.sort((a,b) => (parseFloat(b.record) - parseFloat(a.record)) || ((b.deus||0) - (a.deus||0)) || ((b.ics||0) - (a.ics||0)));
 
         const titolRecord = tipusRankingActual === 'brut' ? "Rècord" : "Índex màx.";
         const titolMitjana = tipusRankingActual === 'brut' ? "Mitj./fletxa" : "Mitj./sessió";
@@ -489,7 +553,7 @@
             h += `<tr style="cursor:pointer; transition:0.2s; border-bottom:1px solid #eee;" onclick="toggleDetallRanking(${i})">
                     <td style="padding:10px 2px; font-size:1.1rem;">${medalla}</td>
                     <td style="text-align:left"><b>${arq.nom}</b></td>
-                    <td style="font-weight:bold; color:var(--blau); font-size:1.1rem;">${arq.record}</td>
+                    <td style="font-weight:bold; color:var(--blau); font-size:1.1rem;">${arq.record}${arq.deus !== undefined ? `<div style="font-size:0.6rem; color:#888; font-weight:normal;">${arq.deus}×10 · ${arq.ics}X</div>` : ''}</td>
                     <td style="color:#555;">${arq.mitjana}</td>
                     <td style="color:#555;">${arq.tirades}</td>
                   </tr>`;
@@ -663,16 +727,58 @@
         }
         
         let flx = [];
+        let sessionsStats = [];
         fil.forEach(d => {
             let detall = d['Detall Tandes'] || d['detall_tandes'] || "";
+            let punts = 0, nF = 0, deus = 0, ics = 0;
             let regex = /\[(.*?)\]/g; let m;
             while ((m = regex.exec(detall)) !== null) {
                 m[1].split(',').forEach(f => {
                     let v = f.trim().toUpperCase();
-                    if(v==='X') flx.push(10); else if(v==='M') flx.push(0); else if(!isNaN(parseInt(v))) flx.push(parseInt(v));
+                    let val = (v==='X'?10:(v==='M'?0:parseInt(v)));
+                    if(!isNaN(val)) {
+                        flx.push(val);
+                        punts += val; nF++;
+                        if(v==='X'){ ics++; deus++; } else if(val===10) deus++;
+                    }
+                });
+            }
+            if(nF > 0) {
+                const dt = new Date(d.Data || d.data);
+                sessionsStats.push({
+                    punts, fletxes: nF, deus, ics,
+                    mitjana: punts / nF,
+                    temps: isNaN(dt.getTime()) ? 0 : dt.getTime(),
+                    dataStr: isNaN(dt.getTime()) ? "s/d" : dt.toLocaleDateString(),
+                    arc: d.Arc || d.arc || "",
+                    dist: d.Distancia || d['Distància'] || d.distancia || ""
                 });
             }
         });
+
+        sessionsStats.sort((a,b) => a.temps - b.temps);
+
+        // Rècord personal amb desempat World Archery: punts > 10s > Xs
+        let pbIdx = -1;
+        sessionsStats.forEach((s, i) => {
+            if(pbIdx === -1) { pbIdx = i; return; }
+            const pb = sessionsStats[pbIdx];
+            if(s.punts > pb.punts || (s.punts === pb.punts && (s.deus > pb.deus || (s.deus === pb.deus && s.ics > pb.ics)))) pbIdx = i;
+        });
+
+        const cardPB = document.getElementById('cardPB');
+        if(pbIdx >= 0) {
+            const pb = sessionsStats[pbIdx];
+            cardPB.style.display = 'block';
+            cardPB.innerHTML = `<div style="font-size:0.8rem; color:#666;">🏆 Rècord personal (amb els filtres actuals)</div>
+                <div style="font-size:2.4rem; font-weight:bold; color:var(--primary); line-height:1.2;">${pb.punts}</div>
+                <div style="font-size:0.85rem; color:#555; font-weight:bold;">${pb.deus}×10 · ${pb.ics}X · ${pb.fletxes} fletxes</div>
+                <div style="font-size:0.75rem; color:#888; margin-top:3px;">${pb.dataStr}${pb.arc ? " · " + pb.arc : ""}${pb.dist ? " · " + pb.dist + "m" : ""}</div>`;
+        } else {
+            cardPB.style.display = 'none';
+        }
+
+        renderGraficaEvolucio(sessionsStats, pbIdx);
 
         if(flx.length === 0) {
             ['valMin','valMitjana','valMax','valQ10','valQ50','valQ90'].forEach(id => document.getElementById(id).innerText = "-");
@@ -698,6 +804,51 @@
         document.getElementById('valQ10').innerText = q10;
         document.getElementById('valQ50').innerText = q50;
         document.getElementById('valQ90').innerText = q90;
+    }
+
+    // Gràfica d'evolució en SVG natiu: sense llibreries externes, funciona offline al camp de tir.
+    function renderGraficaEvolucio(sessions, pbIdx) {
+        const cont = document.getElementById('graficaEvolucio');
+        if(!sessions || sessions.length === 0) {
+            cont.innerHTML = '<div style="color:#aaa; font-size:0.8rem; padding:15px 0;">Sense sessions per a aquests filtres.</div>';
+            return;
+        }
+        const W = 320, H = 150, mL = 26, mR = 10, mT = 12, mB = 20;
+        const vals = sessions.map(s => s.mitjana);
+        let yMin = Math.max(0, Math.floor(Math.min(...vals)));
+        let yMax = Math.min(10, Math.ceil(Math.max(...vals)));
+        if(yMax === yMin) { yMax = Math.min(10, yMin + 1); yMin = Math.max(0, yMin - 1); }
+
+        const x = i => sessions.length === 1 ? (mL + (W - mL - mR) / 2) : mL + i * (W - mL - mR) / (sessions.length - 1);
+        const y = v => mT + (yMax - v) * (H - mT - mB) / (yMax - yMin);
+
+        let grid = '';
+        const pas = (yMax - yMin) > 5 ? 2 : 1;
+        for(let g = yMin; g <= yMax; g += pas) {
+            grid += `<line x1="${mL}" y1="${y(g)}" x2="${W-mR}" y2="${y(g)}" stroke="#eee"/>` +
+                    `<text x="${mL-4}" y="${y(g)+3}" font-size="8" fill="#999" text-anchor="end">${g}</text>`;
+        }
+
+        const puntsLinia = sessions.map((s,i) => `${x(i).toFixed(1)},${y(s.mitjana).toFixed(1)}`).join(' ');
+        const linia = sessions.length > 1 ? `<polyline points="${puntsLinia}" fill="none" stroke="#0fb9b1" stroke-width="2"/>` : '';
+        const dots = sessions.map((s,i) => {
+            const esPB = (i === pbIdx);
+            return `<circle cx="${x(i).toFixed(1)}" cy="${y(s.mitjana).toFixed(1)}" r="${esPB?5:3.5}" fill="${esPB?'#FFEB3B':'#0fb9b1'}" stroke="${esPB?'#c9a600':'white'}" stroke-width="1.5"/>`;
+        }).join('');
+
+        const dIni = sessions[0].dataStr;
+        const dFi = sessions[sessions.length-1].dataStr;
+        const ultima = sessions[sessions.length-1];
+
+        cont.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto;">
+                ${grid}${linia}${dots}
+                <text x="${mL}" y="${H-5}" font-size="8" fill="#999">${dIni}</text>
+                <text x="${W-mR}" y="${H-5}" font-size="8" fill="#999" text-anchor="end">${sessions.length > 1 ? dFi : ''}</text>
+            </svg>
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888; margin-top:4px;">
+                <span>🟡 sessió del rècord</span>
+                <span>Última: <b>${ultima.mitjana.toFixed(2)}</b>/fletxa (${ultima.punts} pts)</span>
+            </div>`;
     }
 
     function obrirEdicio(ai, ti) { editIdx = { arq: ai, tanda: ti }; let t = arquers[ai].tandes[ti]; document.getElementById('modArquerNom').innerText = arquers[ai].nom; document.getElementById('modTandaNum').innerText = ti + 1; document.getElementById('modFletxes').innerHTML = t.map((f, i) => `<select id="modF${i}">` + ['X','10','9','8','7','6','5','4','3','2','1','M'].map(o => `<option value="${o}" ${f.toString()===o?'selected':''}>${o}</option>`).join('') + `</select>`).join(''); document.getElementById('modalEdicio').style.display = 'flex'; }
@@ -757,6 +908,55 @@
             : "✅ Cap enviament pendent.";
     }
 
+    // ---------- Confirmació de targes (equivalent digital de la signatura) ----------
+    function resumArquer(arq) {
+        let total = 0, deus = 0, ics = 0;
+        arq.tandes.flat().forEach(f => {
+            if(f==='X'){ total+=10; ics++; deus++; }
+            else if(f==10){ total+=10; deus++; }
+            else if(f!=='M') total += parseInt(f);
+        });
+        return { total, deus, ics, entrades: arq.tandes.length };
+    }
+
+    function obrirConfirmacioEnviament() {
+        if(!arquers.length || arquers.every(a => a.tandes.length === 0)) return alert("No hi ha cap entrada anotada.");
+
+        let avisos = "";
+        if(config.entradesMax && arquers[0].tandes.length < config.entradesMax) {
+            avisos += `<div style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:8px; font-size:0.75rem; margin-bottom:10px; text-align:left;">⚠️ <b>Ronda incompleta:</b> ${arquers[0].tandes.length}/${config.entradesMax} entrades anotades.</div>`;
+        }
+        if(arquers.some(a => a.tandaActual.length > 0)) {
+            avisos += `<div style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:8px; font-size:0.75rem; margin-bottom:10px; text-align:left;">⚠️ Hi ha una entrada a mig anotar que <b>no</b> s'enviarà (torna a Anotar per completar-la).</div>`;
+        }
+        document.getElementById('confAvisos').innerHTML = avisos;
+
+        document.getElementById('confLlista').innerHTML = arquers.map(a => {
+            const s = resumArquer(a);
+            return `<div style="background:#f5f6fa; border-radius:8px; padding:10px; margin-bottom:10px; text-align:left;">
+                <b>👤 ${a.nom}</b> <span style="font-size:0.75rem; color:#888;">(${a.arc})</span>
+                <div style="font-size:0.85rem; margin:5px 0;">Total: <b style="font-size:1.15rem; color:var(--primary);">${s.total}</b> &nbsp;·&nbsp; ${s.deus}×10 &nbsp;·&nbsp; ${s.ics}X &nbsp;·&nbsp; ${s.entrades} entrades</div>
+                <label style="font-size:0.8rem; display:flex; align-items:center; font-weight:bold; cursor:pointer;">
+                    <input type="checkbox" class="chkConfArquer" onchange="validarConfirmacions()" style="width:auto; margin:0 8px 0 0; transform:scale(1.3);">
+                    ✍️ Confirmo la meva puntuació
+                </label>
+            </div>`;
+        }).join('');
+
+        document.getElementById('btnConfirmarEnviar').disabled = true;
+        document.getElementById('modalConfirmacio').style.display = 'flex';
+    }
+
+    function validarConfirmacions() {
+        const tots = [...document.querySelectorAll('.chkConfArquer')].every(c => c.checked);
+        document.getElementById('btnConfirmarEnviar').disabled = !tots;
+    }
+
+    function confirmarIEnviar() {
+        document.getElementById('modalConfirmacio').style.display = 'none';
+        enviarAlClub();
+    }
+
     async function enviarAlClub() {
         const prop = localStorage.getItem('vig_propietari');
         const consent = document.getElementById('chkConsent').checked;
@@ -770,6 +970,7 @@
             const dades = {
                 id_sessio: generarIdSessio(),
                 data: new Date().toISOString(),
+                ronda: config.ronda,
                 esdeveniment: config.event, arquer: arq.nom, arc: arq.arc, categoria: arq.categoria,
                 distancia: config.dist, diana: config.diana, punts: total, deus, ics,
                 detall_tandes: arq.tandes.map((t, i) => `T${i+1}[${t.join(',')}]`).join(' ')
